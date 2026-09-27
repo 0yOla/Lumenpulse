@@ -586,7 +586,7 @@ flowchart TD
     TestLocal --> DeployFix[7. Upload WASM & Execute upgrade / rollback]
     DeployFix --> Smoke[8. Run Smoke Harness: npm run smoke]
     Smoke --> Unpause[9. Unpause Contracts & Resume Traffic]
-    Unpause --> Postmortem[10. Publish Postmortem: document/POSTMORTEM_TEMPLATE.md]
+    Unpause --> Postmortem[10. Publish Postmortem: docs/POSTMORTEM_TEMPLATE.md]
 ```
 
 #### Incident Execution Steps:
@@ -645,7 +645,7 @@ flowchart TD
    ```
 
 5. **Complete Incident Postmortem**:
-   Document the timeline, root cause, and remediation using [`document/POSTMORTEM_TEMPLATE.md`](POSTMORTEM_TEMPLATE.md) and [`document/INCIDENT_POSTMORTEM_WORKFLOW.md`](INCIDENT_POSTMORTEM_WORKFLOW.md).
+   Document the timeline, root cause, and remediation using [`docs/POSTMORTEM_TEMPLATE.md`](POSTMORTEM_TEMPLATE.md) and [`docs/INCIDENT_POSTMORTEM_WORKFLOW.md`](INCIDENT_POSTMORTEM_WORKFLOW.md).
 
 ---
 
@@ -678,4 +678,108 @@ Before submitting or merging any PR touching Soroban contracts, deployment scrip
 - [ ] Contract test suite passes: `cargo test --workspace` in `apps/onchain`.
 - [ ] WASM size check passes: `node scripts/check-wasm-size.mjs`.
 - [ ] Smoke simulation passes: `npm run smoke --prefix scripts`.
-- [ ] Any interface or upgrade changes are cross-referenced in [`document/SMART_CONTRACTS.md`](SMART_CONTRACTS.md).
+- [ ] Any interface or upgrade changes are cross-referenced in [`docs/SMART_CONTRACTS.md`](SMART_CONTRACTS.md).
+
+---
+
+## 11. Known Repository Gotchas (Deployment Environment)
+
+Carried over from the former `TESTNET_RUNBOOK.md`, which this playbook now replaces. All three
+were re-verified against the current tree and **remain unfixed** — read this section before
+your first deployment.
+
+### 11.1 The network passphrase in `scripts/.env.example` is misspelled
+
+`scripts/.env.example` ships with:
+
+```text
+NETWORK_PASSPHRASE="Test SDA Network ; September 2015"
+```
+
+The correct Stellar testnet passphrase is **SDF**, not SDA:
+
+```text
+NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
+```
+
+Copying the example file verbatim produces a passphrase that will not match testnet, and every
+transaction signed with it is rejected. `scripts/deploy.ts` falls back to `Networks.TESTNET`
+only when `NETWORK_PASSPHRASE` is **unset** — a wrong value is used as given.
+
+### 11.2 The RPC variable name differs between the example and the script
+
+`scripts/.env.example` defines `RPC_URL`, but `scripts/deploy.ts:17` reads `SOROBAN_RPC_URL`:
+
+```ts
+const SOROBAN_RPC_URL = process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
+```
+
+Setting only `RPC_URL` has no effect — the script silently uses its public-testnet default, so
+a deployment aimed at a private or local RPC quietly goes to the public endpoint instead. Define:
+
+```env
+SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+```
+
+### 11.3 The deployment script covers four contracts, not the whole workspace
+
+`scripts/contracts.config.ts` configures exactly four:
+
+```text
+token            -> lumen_token.wasm
+registry         -> contributor_registry.wasm
+vault            -> crowdfund_vault.wasm
+vesting_wallet   -> vesting_wallet.wasm
+```
+
+`apps/onchain/contracts/` holds substantially more. **A contract existing in that directory does
+not mean it is deployed** — anything not in `contracts.config.ts` must be deployed by hand, per
+§4, and recorded in the manifest per §5.
+
+### 11.4 Security preconditions
+
+Before any deployment:
+
+- Confirm the network is Stellar testnet and the admin account is a testnet account.
+- Confirm the account holds sufficient testnet XLM.
+- Confirm the required WASM files exist and the init arguments match the contract functions.
+- Never commit `ADMIN_SECRET`; never put private keys or secrets in this document.
+- Never use production credentials or endpoints for a testnet deployment.
+
+### 11.5 Deployment record
+
+Record after every successful deployment — in the deployment PR or the ops log, never with
+credentials:
+
+```text
+Deployment date:
+Git commit:
+Network:
+Admin public key:
+Token contract ID:
+Contributor Registry contract ID:
+Crowdfund Vault contract ID:
+Vesting Wallet contract ID:
+WASM hashes:
+Deployment transaction hashes:
+Initialization transaction hashes:
+Validation status:
+Known issues:
+```
+
+### 11.6 Final deployment checklist
+
+- [ ] Testnet network confirmed
+- [ ] Correct testnet passphrase configured (§11.1)
+- [ ] `SOROBAN_RPC_URL` configured, not `RPC_URL` (§11.2)
+- [ ] Horizon testnet endpoint configured
+- [ ] Testnet administrator configured and funded
+- [ ] Deployment dependencies installed
+- [ ] WASM artifacts built
+- [ ] Token, Contributor Registry, Crowdfund Vault, and Vesting Wallet deployed
+- [ ] Contracts initialized successfully
+- [ ] `contract-ids.json` generated
+- [ ] Relevant tests executed
+- [ ] Deployment transactions recorded (§11.5)
+- [ ] No secrets committed
+- [ ] Known issues documented

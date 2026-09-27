@@ -217,7 +217,7 @@ def _log_prediction(
     try:
         # Prediction request logging follows the same personal-data rules as
         # ingestion: both the stored copy and its hash are derived from the
-        # scrubbed text (#1452, doc/personal-data-policy.md).
+        # scrubbed text (#1452, docs/personal-data-policy.md).
         scrubbed_input = scrub_text(input_text)
         scrubbed_output = scrub_record(output)
         store_raw_input = os.getenv("LOG_PREDICTION_RAW_INPUT", "false").lower() == "true"

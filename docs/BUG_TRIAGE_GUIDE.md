@@ -105,5 +105,5 @@ Every P1 incident and any P2 with ≥ 15 minutes of user-facing downtime **must*
 - [Postmortem Template](POSTMORTEM_TEMPLATE.md) — reusable template for postmortem documents.
 - [Error Codes Reference](error-codes.md) — API error codes and meanings.
 - [ETL & Data Pipeline Runbook](ETL_RUNBOOK.md) — recovery procedures for data pipeline failures.
-- [Review Playbook](review-playbook.md) — PR review standards and hotfix guidance.
+- [Contributor PR Review Guide](contributor-pr-review-guide.md) — PR review standards and hotfix guidance.
 - [Contributing Guide](../CONTRIBUTING.md) — branch naming, commit conventions, and PR process.
