@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { requireStepUpAuthentication } from '../biometric-lock';
 
-let originalPlatformOS: string;
+let originalPlatformOS: typeof Platform.OS;
 
 jest.mock('react-native', () => ({
   Platform: { OS: 'ios' },
