@@ -30,6 +30,7 @@ exclude = ["contracts/tests"]
 
 [workspace.dependencies]
 soroban-sdk = "23"
+soroban-sdk-macros = "23"
 
 [profile.release]
 opt-level = "z"
