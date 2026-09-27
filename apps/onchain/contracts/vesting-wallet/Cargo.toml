@@ -13,6 +13,7 @@ soroban-sdk = { workspace = true }
 reentrancy-guard = { path = "../reentrancy-guard" }
 cross-contract-view = { path = "../cross-contract-view" }
 version-interface = { path = "../version-interface" }
+error-registry = { path = "../error-registry" }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }

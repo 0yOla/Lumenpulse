@@ -1,0 +1,12 @@
+[package]
+name = "error-registry"
+version = "0.1.0"
+edition = "2021"
+description = "Standardized error code registry for LumenPulse contracts"
+
+[dependencies]
+soroban-sdk = { version = "21.0.0", features = ["contracterror"] }
+
+[lib]
+name = "error_registry"
+path = "src/lib.rs"
