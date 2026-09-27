@@ -917,6 +917,10 @@ For data-processing changes:
 
 Restore the last known-good client build/deployment.
 
+For mobile, follow the ordered procedures in
+[MOBILE_RELEASE_AND_OTA.md §7](MOBILE_RELEASE_AND_OTA.md#7-rollback) - an OTA update and a
+store release roll back differently, and only one of them is fast.
+
 After rollback verify:
 
 * API endpoint configuration;
@@ -1101,15 +1105,15 @@ Use this checklist in the release PR.
 
 Use these documents for deeper component-specific procedures:
 
-* [`document/LOCAL_SETUP.md`](../document/LOCAL_SETUP.md) — complete local environment setup.
-* [`document/MOBILE_GUIDE.md`](../document/MOBILE_GUIDE.md) — mobile-specific development guidance.
-* [`document/SMART_CONTRACTS.md`](../document/SMART_CONTRACTS.md) — smart-contract documentation.
-* [`document/ETL_RUNBOOK.md`](../document/ETL_RUNBOOK.md) — data/ETL operational procedures.
-* [`document/BUG_TRIAGE_GUIDE.md`](../document/BUG_TRIAGE_GUIDE.md) — bug investigation and triage.
-* [`document/INCIDENT_POSTMORTEM_WORKFLOW.md`](../document/INCIDENT_POSTMORTEM_WORKFLOW.md) — incident follow-up.
-* [`doc/testing-strategy.md`](testing-strategy.md) — repository testing strategy.
-* [`doc/threat-model.md`](threat-model.md) — security/threat-model context.
-* [`doc/adr/README.md`](adr/README.md) — architecture decisions.
+* [`docs/LOCAL_SETUP.md`](LOCAL_SETUP.md) — complete local environment setup.
+* [`docs/MOBILE_GUIDE.md`](MOBILE_GUIDE.md) — mobile-specific development guidance.
+* [`docs/SMART_CONTRACTS.md`](SMART_CONTRACTS.md) — smart-contract documentation.
+* [`docs/ETL_RUNBOOK.md`](ETL_RUNBOOK.md) — data/ETL operational procedures.
+* [`docs/BUG_TRIAGE_GUIDE.md`](BUG_TRIAGE_GUIDE.md) — bug investigation and triage.
+* [`docs/INCIDENT_POSTMORTEM_WORKFLOW.md`](INCIDENT_POSTMORTEM_WORKFLOW.md) — incident follow-up.
+* [`docs/testing-strategy.md`](testing-strategy.md) — repository testing strategy.
+* [`docs/threat-model.md`](threat-model.md) — security/threat-model context.
+* [`docs/adr/README.md`](adr/README.md) — architecture decisions.
 
 ---
 

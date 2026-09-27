@@ -30,6 +30,13 @@ npm run format
 - Avoid inline styles when reusable `StyleSheet` styles are appropriate.
 - Include UI proof (screenshots or screen recording) in PRs for visual changes.
 
+## Releases
+
+Cutting a release, publishing an OTA update, rolling either back, and the gates that must pass
+first are documented in
+[Mobile Release and OTA Process](MOBILE_RELEASE_AND_OTA.md). Read it before bumping a version
+or publishing an update.
+
 ## Done for Mobile Changes
 
 - `npm run lint` passes.

@@ -6,14 +6,14 @@ Thanks for contributing. This guide defines the standards expected before review
 
 Use this document for repo-wide workflow and standards. For area-specific commands and architecture notes:
 
-- [Mobile Guide](document/mobile-contributing.md)
-- [Backend Guide](document/backend-contributing.md)
-- [Contracts Guide](document/contracts-contributing.md)
-- [Contributor Review Guide](document/review-guide.md) - how reviewers verify a change before it merges
+- [Mobile Guide](docs/mobile-contributing.md)
+- [Backend Guide](docs/backend-contributing.md)
+- [Contracts Guide](docs/contracts-contributing.md)
+- [Contributor Review Guide](docs/contributor-pr-review-guide.md) - how reviewers verify a change before it merges
 
 ## Platform Direction
 
-LumenPulse operates on Stellar/Soroban. All new work should align with Stellar-first principles. See [Stellar Migration Notes](document/STELLAR_MIGRATION_NOTES.md) for details on migration from prior chain assumptions and guidance for contributors.
+LumenPulse operates on Stellar/Soroban. All new work should align with Stellar-first principles. See [Stellar Migration Notes](docs/STELLAR_MIGRATION_NOTES.md) for details on migration from prior chain assumptions and guidance for contributors.
 
 ## How to Contribute
 
@@ -41,7 +41,7 @@ git checkout -b docs/short-description
 - Update docs when behavior, setup, or usage changes.
 - Add or update an ADR when the change introduces or revises a significant architectural decision, platform boundary, operational pattern, or contract/governance approach.
 
-When an issue changes how services are split, how the backend integrates with Python or external systems, how on-chain state or upgradeability works, or what persistence/eventing pattern is used, the PR should include an ADR entry in [doc/adr/README.md](doc/adr/README.md) and link the related implementation summary or feature write-up.
+When an issue changes how services are split, how the backend integrates with Python or external systems, how on-chain state or upgradeability works, or what persistence/eventing pattern is used, the PR should include an ADR entry in [docs/adr/README.md](docs/adr/README.md) and link the related implementation summary or feature write-up.
 
 4. Run validation locally
 - Run the relevant lint/test commands for your area:
@@ -83,7 +83,7 @@ docs(meta): add comprehensive contributing guidelines and standards
 - [ ] Commit messages follow Conventional Commits.
 - [ ] Lint passed for affected app(s).
 - [ ] Tests passed for affected app(s).
-- [ ] Docs updated (including `document/` guides when applicable).
+- [ ] Docs updated (including `docs/` guides when applicable).
 - [ ] PR description links the issue (`Closes #...`).
 - [ ] Screenshots/video attached for UI changes.
 - [ ] PR description names every file or artefact the change creates or modifies (see [Definition of Done for Issue Closure](#definition-of-done-for-issue-closure)).
@@ -140,7 +140,7 @@ git show origin/main:<path> | head                 # prints the content, fails i
 ```
 
 The full reviewer checklist is in the
-[Contributor Review Guide](document/review-guide.md#reviewer-checklist). If an artefact named
+[Contributor Review Guide](docs/contributor-pr-review-guide.md#12-reviewer-quick-reference). If an artefact named
 by a merged PR is missing, reopen the issue and post the output showing its absence.
 
 ### 3. Closing without a merged PR requires a written reason
@@ -170,7 +170,7 @@ pull request merged under a matching title; in each case the work was not presen
 | `notification_interface` test module | `apps/onchain/contracts/notification_interface/src/test.rs` | The crate holds only `Cargo.toml` and `src/lib.rs`, with no `#[cfg(test)]` module - unlike sibling contracts such as `crowdfund_vault` and `vesting-wallet`. |
 
 Each of these would have been caught by one command against the merged branch. The
-[Contributor Review Guide](document/review-guide.md#worked-examples-of-the-failure-mode)
+[Contributor Review Guide](docs/contributor-pr-review-guide.md#131-worked-examples-of-the-failure-mode)
 gives the exact command per case.
 
 ## Review Standards
@@ -184,6 +184,6 @@ PRs may be blocked when:
 - Tests or lint are skipped without clear reason.
 - Required docs are missing.
 
-Reviewers should work from the [Contributor Review Guide](document/review-guide.md).
+Reviewers should work from the [Contributor Review Guide](docs/contributor-pr-review-guide.md).
 
 Following this guide keeps review focused on code quality instead of process fixes.

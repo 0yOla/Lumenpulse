@@ -48,8 +48,8 @@ Use these definitions when filling in the Incident Summary table of the postmort
 As soon as a P1/P2 incident is resolved, the **incident lead** must:
 
 1. Open a new GitHub issue titled `postmortem: <short incident title>` and label it `postmortem`.
-2. Copy the postmortem template from [`document/POSTMORTEM_TEMPLATE.md`](POSTMORTEM_TEMPLATE.md).
-3. Create a new file at `document/postmortems/POSTMORTEM-<YYYY-MM-DD>-<short-title>.md`.
+2. Copy the postmortem template from [`docs/POSTMORTEM_TEMPLATE.md`](POSTMORTEM_TEMPLATE.md).
+3. Create a new file at `docs/postmortems/POSTMORTEM-<YYYY-MM-DD>-<short-title>.md`.
 4. Fill in the **Incident Summary** and **Timeline** sections while memory is fresh.
 5. Assign the GitHub issue to the incident lead.
 
@@ -127,4 +127,4 @@ List all published postmortems here in reverse chronological order. Update this 
 - [Postmortem Template](POSTMORTEM_TEMPLATE.md) — fill this out for every postmortem.
 - [Bug Triage Guide](BUG_TRIAGE_GUIDE.md) — how bugs are reported, prioritized, and escalated.
 - [ETL & Data Pipeline Runbook](ETL_RUNBOOK.md) — recovery procedures for data pipeline incidents.
-- [Review Playbook](review-playbook.md) — PR review standards, including hotfix path for critical incidents.
+- [Contributor PR Review Guide](contributor-pr-review-guide.md) — PR review standards, including hotfix path for critical incidents.
