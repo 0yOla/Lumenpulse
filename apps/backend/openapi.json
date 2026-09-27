@@ -35279,7 +35279,7 @@
     },
     "/review-metrics/aging": {
       "get": {
-        "description": "Returns aging distribution and latency statistics for pending/in-review items across moderation reports and portfolio anomalies. Requires admin role.",
+        "description": "Returns aging distribution and latency statistics for pending/in-review items across moderation reports and portfolio anomalies. Requires reviewer or admin role.",
         "operationId": "ReviewMetricsController_getAgingMetrics",
         "parameters": [
           {
@@ -35390,7 +35390,7 @@
             }
           },
           "403": {
-            "description": "Forbidden – admin role required",
+            "description": "Forbidden – reviewer or admin role required",
             "content": {
               "application/json": {
                 "schema": {
