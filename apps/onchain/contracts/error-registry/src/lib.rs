@@ -268,30 +268,15 @@ mod tests {
     #[test]
     fn test_resolve_error_code() {
         // Common errors
-        assert_eq!(
-            resolve_error_code(2000),
-            Some(("treasury", 0))
-        );
-        assert_eq!(
-            resolve_error_code(2001),
-            Some(("treasury", 1))
-        );
-        assert_eq!(
-            resolve_error_code(2002),
-            Some(("treasury", 2))
-        );
+        assert_eq!(resolve_error_code(2000), Some(("treasury", 0)));
+        assert_eq!(resolve_error_code(2001), Some(("treasury", 1)));
+        assert_eq!(resolve_error_code(2002), Some(("treasury", 2)));
 
         // Contract-specific
-        assert_eq!(
-            resolve_error_code(2010),
-            Some(("treasury", 10))
-        );
+        assert_eq!(resolve_error_code(2010), Some(("treasury", 10)));
 
         // Different contract
-        assert_eq!(
-            resolve_error_code(3005),
-            Some(("vesting_wallet", 5))
-        );
+        assert_eq!(resolve_error_code(3005), Some(("vesting_wallet", 5)));
 
         // Out of range
         assert_eq!(resolve_error_code(999), None);

@@ -4,8 +4,8 @@
 //! Base range: 2000-2999 (ContractId::Treasury = 2)
 //! Common errors: 2000 (NotInitialized), 2001 (AlreadyInitialized), 2002 (Unauthorized)
 
-use soroban_sdk::contracterror;
 use error_registry::{contract_error_code, ContractId};
+use soroban_sdk::contracterror;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]

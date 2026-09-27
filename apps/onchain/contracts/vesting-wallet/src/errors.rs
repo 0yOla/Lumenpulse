@@ -4,8 +4,8 @@
 //! Base range: 3000-3999 (ContractId::VestingWallet = 3)
 //! Common errors: 3000 (NotInitialized), 3001 (AlreadyInitialized), 3002 (Unauthorized)
 
-use soroban_sdk::contracterror;
 use error_registry::{contract_error_code, ContractId};
+use soroban_sdk::contracterror;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]

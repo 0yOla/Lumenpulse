@@ -4,8 +4,8 @@
 //! Base range: 1000-1999 (ContractId::ContributorRegistry = 1)
 //! Common errors: 1000 (NotInitialized), 1001 (AlreadyInitialized), 1002 (Unauthorized)
 
-use soroban_sdk::contracterror;
 use error_registry::{contract_error_code, ContractId};
+use soroban_sdk::contracterror;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]

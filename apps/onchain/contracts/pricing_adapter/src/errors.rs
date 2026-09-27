@@ -4,8 +4,8 @@
 //! Base range: 4000-4999 (ContractId::PricingAdapter = 4)
 //! Common errors: 4000 (NotInitialized), 4001 (AlreadyInitialized), 4002 (Unauthorized)
 
-use soroban_sdk::contracterror;
 use error_registry::{contract_error_code, ContractId};
+use soroban_sdk::contracterror;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]

@@ -4,8 +4,8 @@
 //! Base range: 6000-6999 (ContractId::StableSwapPool = 6)
 //! Common errors: 6000 (NotInitialized), 6001 (AlreadyInitialized), 6002 (Unauthorized)
 
-use soroban_sdk::contracterror;
 use error_registry::{contract_error_code, ContractId};
+use soroban_sdk::contracterror;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]

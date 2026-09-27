@@ -1,17 +1,17 @@
 use super::*;
+use errors::StableSwapError;
 use soroban_sdk::testutils::Address as _;
 use soroban_sdk::token::{StellarAssetClient, TokenClient};
 use soroban_sdk::{Address, Env, Symbol};
-use errors::StableSwapError;
 
 fn setup_pool<'a>(
     env: &Env,
 ) -> (
-    Address,           // admin
-    Address,           // user1
-    Address,           // user2
-    Address,           // token_a
-    Address,           // token_b
+    Address,            // admin
+    Address,            // user1
+    Address,            // user2
+    Address,            // token_a
+    Address,            // token_b
     StellarAssetClient, // token_a_client
     StellarAssetClient, // token_b_client
     StableSwapPoolContractClient,
@@ -66,25 +66,13 @@ fn test_initialize_pool() {
     client.initialize(&admin, &token_a_id.address(), &token_b_id.address());
 
     // Verify storage
-    let stored_admin: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::Admin)
-        .unwrap();
+    let stored_admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
     assert_eq!(stored_admin, admin);
 
-    let stored_token_a: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::TokenA)
-        .unwrap();
+    let stored_token_a: Address = env.storage().instance().get(&DataKey::TokenA).unwrap();
     assert_eq!(stored_token_a, token_a_id.address());
 
-    let stored_token_b: Address = env
-        .storage()
-        .instance()
-        .get(&DataKey::TokenB)
-        .unwrap();
+    let stored_token_b: Address = env.storage().instance().get(&DataKey::TokenB).unwrap();
     assert_eq!(stored_token_b, token_b_id.address());
 }
 
@@ -262,7 +250,10 @@ fn test_swap_a_to_b() {
 
     // Check user balances
     assert_eq!(token_a_client.balance(&user1), 990_000_000_000);
-    assert_eq!(token_b_client.balance(&user1), 1_000_000_000_000 + amount_out);
+    assert_eq!(
+        token_b_client.balance(&user1),
+        1_000_000_000_000 + amount_out
+    );
 }
 
 #[test]
@@ -433,11 +424,7 @@ fn test_multiple_users_liquidity() {
     assert_eq!(client.lp_balance(&user2), lp_user2);
 
     // Total supply
-    let total_supply: i128 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::LPSupply)
-        .unwrap();
+    let total_supply: i128 = env.storage().persistent().get(&DataKey::LPSupply).unwrap();
     assert_eq!(total_supply, 100_000_000 + lp_user2);
 
     // Both remove liquidity
@@ -522,7 +509,10 @@ fn test_isqrt_accuracy() {
     assert_eq!(StableSwapPoolContract::isqrt(99), 9);
 
     // Large numbers
-    assert_eq!(StableSwapPoolContract::isqrt(u128::MAX), 340282366920938463463374607431768211455);
+    assert_eq!(
+        StableSwapPoolContract::isqrt(u128::MAX),
+        340282366920938463463374607431768211455
+    );
 }
 
 #[test]
@@ -652,4 +642,4 @@ fn test_minimum_output_enforcement() {
 }
 
 // Import DataKey for tests
-use storage::{DataKey, LEDGER_THRESHOLD, LEDGER_BUMP};
+use storage::{DataKey, LEDGER_BUMP, LEDGER_THRESHOLD};
