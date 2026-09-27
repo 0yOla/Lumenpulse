@@ -1,6 +1,5 @@
-import { Platform } from 'react-native';
-
-let originalPlatformOS: typeof Platform.OS;
+let Platform: typeof import('react-native').Platform;
+let originalPlatformOS: typeof import('react-native').Platform.OS;
 let LocalAuthentication: typeof import('expo-local-authentication');
 let requireStepUpAuthentication: typeof import('../biometric-lock').requireStepUpAuthentication;
 
@@ -17,6 +16,7 @@ describe('biometric-lock step-up mechanism', () => {
     jest.resetModules();
     jest.clearAllMocks();
     jest.useFakeTimers();
+    Platform = require('react-native').Platform;
     originalPlatformOS = Platform.OS;
     Platform.OS = 'ios';
     LocalAuthentication = require('expo-local-authentication');
