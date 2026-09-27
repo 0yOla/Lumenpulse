@@ -1365,6 +1365,7 @@ class ForecastResponse(BaseModel):
     model_backend: str
     data_points_used: int
     generated_at: str
+    confidence_indication: str = "low"  # "high" | "medium" | "low" — derived from backtest
 
 
 @app.get("/analytics/forecast", response_model=ForecastResponse)
@@ -1387,18 +1388,36 @@ async def get_forecast(request: Request) -> ForecastResponse:
 
     def _run_forecast():
         from src.analytics.forecaster import SentimentForecaster
+        from src.analytics.backtester import BacktestHarness, load_config
 
         forecaster = SentimentForecaster()
-        return forecaster.run()
+        df = forecaster.load_history()
+        if not forecaster._is_trained:
+            forecaster.train(df)
+        result = forecaster.predict(df)
+
+        # Derive confidence indication from backtest (best-effort)
+        confidence_indication = "low"
+        try:
+            cfg = load_config()
+            harness = BacktestHarness(cfg)
+            if df is not None and len(df) >= cfg.initial_train_size + max(cfg.horizons):
+                report = harness.run(df)
+                confidence_indication = report.confidence_indication
+        except Exception as bt_exc:
+            logger.warning(f"Backtest skipped during forecast: {bt_exc}")
+
+        return result, confidence_indication
 
     loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _run_forecast)
+        result, confidence_indication = await loop.run_in_executor(None, _run_forecast)
     except Exception as exc:
         logger.error(f"Forecast failed: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Forecast error: {exc}")
 
     output_dict = result.to_dict()
+    output_dict["confidence_indication"] = confidence_indication
     _log_prediction(
         request_id=correlation_id_ctx.get(generate_correlation_id()),
         model_type="forecast",
