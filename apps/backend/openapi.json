@@ -26726,7 +26726,7 @@
         ]
       },
       "post": {
-        "description": "Creates a new feature flag or modifies the active state of an existing one. Requires admin role.",
+        "description": "Creates a new feature flag or modifies the active state of an existing one, including its rollout percentage and allow/deny lists. Omitting the targeting fields leaves any existing rollout untouched. Requires admin role.",
         "operationId": "FeatureFlagsController_upsert",
         "parameters": [
           {
@@ -26927,13 +26927,21 @@
     },
     "/feature-flags/check/{key}": {
       "get": {
-        "description": "Determine whether a specific feature key is active.",
+        "description": "Determine whether a specific feature key is active. Pass `principalId` to have percentage and list targeting applied for that principal; without it the flag's plain on/off state is returned.",
         "operationId": "FeatureFlagsController_check",
         "parameters": [
           {
             "name": "key",
             "required": true,
             "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principalId",
+            "required": true,
+            "in": "query",
             "schema": {
               "type": "string"
             }
@@ -27156,6 +27164,167 @@
           }
         },
         "summary": "Get flag change history (admin)",
+        "tags": [
+          "feature-flags"
+        ]
+      }
+    },
+    "/feature-flags/{key}/evaluate": {
+      "get": {
+        "description": "Resolve a feature flag for a specific principal and report the result, the rule that produced it, and the principal's stable hash bucket. Requires admin role.",
+        "operationId": "FeatureFlagsController_evaluate",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principalId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flag evaluated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagEvaluationResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (admin only)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Evaluate a flag for one principal (admin only)",
         "tags": [
           "feature-flags"
         ]
@@ -44190,6 +44359,34 @@
             "description": "Whether the feature is enabled",
             "example": true
           },
+          "rolloutPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage (0-100) of principals targeted when above 0; null for plain on/off.",
+            "example": 5
+          },
+          "allowList": {
+            "nullable": true,
+            "description": "Principal IDs always granted the flag.",
+            "example": [
+              "user-123"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "nullable": true,
+            "description": "Principal IDs always denied the flag.",
+            "example": [
+              "user-456"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "conditions": {
             "type": "object",
             "description": "Optional conditions",
@@ -44240,6 +44437,26 @@
             "description": "Flag's enabled state after this mutation (null for removals)",
             "example": true
           },
+          "previousTargeting": {
+            "type": "object",
+            "nullable": true,
+            "description": "Targeting (rollout percentage, allow/deny lists) before this mutation; null if the flag did not exist",
+            "example": {
+              "rolloutPercentage": null,
+              "allowList": [],
+              "denyList": []
+            }
+          },
+          "newTargeting": {
+            "type": "object",
+            "nullable": true,
+            "description": "Targeting (rollout percentage, allow/deny lists) after this mutation; null for removals",
+            "example": {
+              "rolloutPercentage": 5,
+              "allowList": [],
+              "denyList": []
+            }
+          },
           "actor": {
             "type": "string",
             "nullable": true,
@@ -44260,6 +44477,81 @@
           "changedAt"
         ]
       },
+      "FlagEvaluationReason": {
+        "type": "string",
+        "enum": [
+          "flag_not_found",
+          "deny_list",
+          "allow_list",
+          "percentage_included",
+          "percentage_excluded",
+          "default_state",
+          "no_principal"
+        ],
+        "description": "The rule that produced this result"
+      },
+      "FlagEvaluationResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The feature-flag key that was evaluated",
+            "example": "new-onboarding-flow"
+          },
+          "principalId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The principal the flag was evaluated for",
+            "example": "user-123"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the flag is enabled for this principal",
+            "example": true
+          },
+          "reason": {
+            "description": "The rule that produced this result",
+            "example": "percentage_included",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagEvaluationReason"
+              }
+            ]
+          },
+          "bucket": {
+            "type": "number",
+            "nullable": true,
+            "description": "The principal's stable hash bucket in [0, 10000); null when no bucket was needed.",
+            "example": 412
+          },
+          "rolloutPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Rollout percentage configured on the flag",
+            "example": 5
+          },
+          "allowList": {
+            "description": "Allow list configured on the flag",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "description": "Deny list configured on the flag",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "principalId",
+          "enabled",
+          "reason"
+        ]
+      },
       "UpsertFeatureFlagDto": {
         "type": "object",
         "properties": {
@@ -44270,8 +44562,39 @@
           },
           "enabled": {
             "type": "boolean",
-            "description": "Whether the feature is enabled",
+            "description": "Whether the feature is enabled. Ignored while `rolloutPercentage` is set, since the percentage alone then decides the result.",
             "example": true
+          },
+          "rolloutPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage (0-100) of principals to target, bucketed stably by principal ID so a user never flips between states. While set it fully replaces the plain on/off behaviour of `enabled`; 0 serves nobody and is therefore the kill switch. Send null to return to plain on/off.",
+            "example": 5,
+            "nullable": true
+          },
+          "allowList": {
+            "maxItems": 500,
+            "description": "Principal IDs always granted the flag, overriding `rolloutPercentage`.",
+            "example": [
+              "user-123",
+              "qa@lumenpulse.com"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "maxItems": 500,
+            "description": "Principal IDs always denied the flag. Overrides both `allowList` and `rolloutPercentage`, so it doubles as a per-user kill switch.",
+            "example": [
+              "user-456"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "conditions": {
             "type": "object",
@@ -44305,6 +44628,27 @@
           "enabled": {
             "type": "boolean"
           },
+          "rolloutPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of principals (0-100) the flag targets, or null for no rollout.\n\nWhen set, this value alone determines the evaluation result — `enabled` is\nnot consulted — so a rollout can serve a fraction of users and later be\nwidened. 0 is a real value meaning \"serve nobody\", which makes it the\nsingle-field kill switch. Null leaves the flag on plain on/off."
+          },
+          "allowList": {
+            "nullable": true,
+            "description": "Principal IDs always granted the flag, regardless of the rollout percentage.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "nullable": true,
+            "description": "Principal IDs always denied the flag; takes precedence over `allowList`.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "conditions": {
             "type": "object",
             "nullable": true
@@ -44326,6 +44670,9 @@
           "id",
           "key",
           "enabled",
+          "rolloutPercentage",
+          "allowList",
+          "denyList",
           "conditions",
           "changedBy",
           "createdAt",
