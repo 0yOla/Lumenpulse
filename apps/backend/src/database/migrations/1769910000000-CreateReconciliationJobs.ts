@@ -39,8 +39,12 @@ export class CreateReconciliationJobs1769910000000 implements MigrationInterface
     const tableExists = await queryRunner.hasTable('reconciliation_jobs');
     if (!tableExists) return;
 
-    await queryRunner.query(`DROP INDEX "public"."IDX_reconciliation_jobs_startedAt"`);
-    await queryRunner.query(`DROP INDEX "public"."IDX_reconciliation_jobs_status"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_reconciliation_jobs_startedAt"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_reconciliation_jobs_status"`,
+    );
     await queryRunner.query(`DROP TABLE "reconciliation_jobs"`);
     await queryRunner.query(`DROP TYPE "reconciliation_status_enum"`);
   }

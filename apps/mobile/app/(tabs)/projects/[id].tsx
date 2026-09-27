@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -10,19 +10,112 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
+import { Image } from 'expo-image';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { crowdfundApi, CrowdfundProject } from '../../../lib/crowdfund';
-import { computeFundingProgress, formatTokenAmount } from '../../../lib/stellar';
+import {
+  crowdfundApi,
+  CrowdfundProject,
+  Contributor,
+  RoadmapItem,
+  OnChainStatus,
+} from '../../../lib/crowdfund';
+import {
+  computeFundingProgress,
+  formatTokenAmount,
+  validateContributionAmount,
+} from '../../../lib/stellar';
+import { ContributionDraft, evaluateContributionDraft } from '../../../lib/contribution-drafts';
+import { isTestnetConfigReady } from '../../../lib/config';
 import ContributionModal from '../../../components/ContributionModal';
+import { requireBiometricConfirmation } from '../../../lib/biometric-lock';
+import VerificationPanel from '../../../components/VerificationPanel';
 import { usersApi } from '../../../lib/api';
+import { storage } from '../../../lib/storage';
+import { ReportType } from '../../../lib/moderation';
+import ReportContentModal from '../../../components/ReportContentModal';
+import { useWallet } from '../../../contexts/WalletContext';
+import { useLocalization } from '../../../src/context';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+const ON_CHAIN_STATUS_META: Record<
+  OnChainStatus,
+  {
+    label: string;
+    description: string;
+    icon: React.ComponentProps<typeof Ionicons>['name'];
+    colorKey: 'success' | 'warning' | 'danger' | 'accent' | 'textSecondary';
+  }
+> = {
+  ACTIVE: {
+    label: 'Active',
+    description: 'Accepting contributions on-chain',
+    icon: 'radio-button-on-outline',
+    colorKey: 'success',
+  },
+  PAUSED: {
+    label: 'Paused',
+    description: 'Contributions temporarily paused',
+    icon: 'pause-circle-outline',
+    colorKey: 'warning',
+  },
+  COMPLETED: {
+    label: 'Completed',
+    description: 'Funding goal reached — vault closed',
+    icon: 'checkmark-circle-outline',
+    colorKey: 'accent',
+  },
+  CANCELLED: {
+    label: 'Cancelled',
+    description: 'Project cancelled — funds returned',
+    icon: 'close-circle-outline',
+    colorKey: 'danger',
+  },
+  PENDING: {
+    label: 'Pending',
+    description: 'Contract deployment in progress',
+    icon: 'time-outline',
+    colorKey: 'textSecondary',
+  },
+};
+
+function OnChainStatusChip({
+  status,
+  colors,
+}: {
+  status: OnChainStatus;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  const meta = ON_CHAIN_STATUS_META[status] ?? ON_CHAIN_STATUS_META.PENDING;
+  const color = colors[meta.colorKey] as string;
+
+  return (
+    <View
+      style={[styles.statusChip, { backgroundColor: color + '18', borderColor: color + '55' }]}
+      accessible
+      accessibilityLabel={`On-chain status: ${meta.label}. ${meta.description}`}
+    >
+      <Ionicons name={meta.icon} size={16} color={color} />
+      <View>
+        <Text style={[styles.statusChipLabel, { color }]}>{meta.label}</Text>
+        <Text style={[styles.statusChipDesc, { color: colors.textSecondary }]}>
+          {meta.description}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 function ProgressBar({ progress, color }: { progress: number; color: string }) {
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: color }]} />
+      <View
+        style={[
+          styles.progressFill,
+          { width: `${Math.min(progress, 100)}%`, backgroundColor: color },
+        ]}
+      />
     </View>
   );
 }
@@ -49,18 +142,88 @@ function StatItem({
   );
 }
 
+function ContributorCard({
+  contributor,
+  colors,
+}: {
+  contributor: Contributor;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  return (
+    <View
+      style={[
+        styles.contributorCard,
+        { backgroundColor: colors.card, borderColor: colors.cardBorder },
+      ]}
+    >
+      <View style={styles.contributorInfo}>
+        <Ionicons name="wallet-outline" size={18} color={colors.accent} />
+        <Text
+          style={[styles.contributorAddress, { color: colors.text }]}
+          numberOfLines={1}
+          ellipsizeMode="middle"
+        >
+          {contributor.publicKey}
+        </Text>
+      </View>
+      <View style={styles.contributorStats}>
+        <Text style={[styles.contributorAmount, { color: colors.accent }]}>
+          {formatTokenAmount(contributor.totalContributed)} XLM
+        </Text>
+        <Text style={[styles.contributorCount, { color: colors.textSecondary }]}>
+          {contributor.contributionCount} contribution
+          {contributor.contributionCount !== 1 ? 's' : ''}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function RoadmapCard({
+  item,
+  colors,
+}: {
+  item: RoadmapItem;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  return (
+    <View
+      style={[styles.roadmapCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+    >
+      <View style={styles.roadmapHeader}>
+        <Ionicons
+          name={item.isCompleted ? 'checkmark-circle' : 'time-outline'}
+          size={20}
+          color={item.isCompleted ? colors.success : colors.textSecondary}
+        />
+        <Text style={[styles.roadmapTitle, { color: colors.text }]}>{item.title}</Text>
+      </View>
+      <Text style={[styles.roadmapDescription, { color: colors.textSecondary }]}>
+        {item.description}
+      </Text>
+      <Text style={[styles.roadmapDate, { color: colors.textSecondary }]}>
+        Target: {new Date(item.targetDate).toLocaleDateString()}
+      </Text>
+    </View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useLocalization();
   const { isAuthenticated } = useAuth();
 
   const [project, setProject] = useState<CrowdfundProject | null>(null);
+  const [contributors, setContributors] = useState<Contributor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showContributeModal, setShowContributeModal] = useState(false);
-  const [stellarPublicKey, setStellarPublicKey] = useState<string | null>(null);
+  const [contributionDraft, setContributionDraft] = useState<ContributionDraft | null>(null);
+  const { publicKey: stellarPublicKey, signAndSubmitXdr } = useWallet();
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const projectId = parseInt(id ?? '0', 10);
 
@@ -82,29 +245,65 @@ export default function ProjectDetailScreen() {
     }
   }, [projectId]);
 
-  const fetchUserPublicKey = useCallback(async () => {
+  const fetchContributors = useCallback(async () => {
     try {
-      const response = await usersApi.getProfile();
-      if (response.success && response.data?.stellarPublicKey) {
-        setStellarPublicKey(response.data.stellarPublicKey);
+      const response = await crowdfundApi.getContributors(projectId);
+      if (response.success && response.data) {
+        setContributors(response.data);
       }
     } catch {
-      // Non-critical — the user may not have a linked account yet
+      // Non-critical — contributors list is optional
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     void fetchProject();
-    if (isAuthenticated) {
-      void fetchUserPublicKey();
+    void fetchContributors();
+  }, [fetchProject, fetchContributors, isAuthenticated]);
+
+  // ── Offline contribution draft (resume / discard) ────────────────────────
+  const refreshContributionDraft = useCallback(async () => {
+    try {
+      const stored = await storage.getContributionDraft();
+      setContributionDraft(stored && stored.projectId === projectId ? stored : null);
+    } catch {
+      setContributionDraft(null);
     }
-  }, [fetchProject, fetchUserPublicKey, isAuthenticated]);
+  }, [projectId]);
+
+  useEffect(() => {
+    void refreshContributionDraft();
+  }, [refreshContributionDraft]);
+
+  /**
+   * Discarding only ever removes the locally saved draft — it never touches
+   * the chain or any account state, so it is always safe.
+   */
+  const handleDiscardDraft = useCallback(async () => {
+    await storage.clearContributionDraft();
+    setContributionDraft(null);
+  }, []);
+
+  const draftEvaluation = useMemo(() => {
+    if (!contributionDraft) {
+      return null;
+    }
+    return evaluateContributionDraft(contributionDraft, {
+      isTestnetConfigReady: isTestnetConfigReady(),
+      isValidAmount: validateContributionAmount,
+    });
+  }, [contributionDraft]);
 
   const handleContribute = async (
     amount: string,
   ): Promise<{ transactionHash?: string; errorMessage?: string }> => {
     if (!stellarPublicKey) {
       return { errorMessage: 'No Stellar account linked. Please link one in Settings first.' };
+    }
+
+    const isConfirmed = await requireBiometricConfirmation('Confirm your identity to contribute');
+    if (!isConfirmed) {
+      return { errorMessage: 'Biometric confirmation failed or cancelled.' };
     }
 
     try {
@@ -115,13 +314,29 @@ export default function ProjectDetailScreen() {
       });
 
       if (response.success && response.data) {
+        let finalTxHash = response.data.transactionHash;
+
+        // Use wallet signing when the backend requests a client-side signature.
+        // The backend must provide a real unsigned XDR; there is no mock fallback.
+        if (response.data.unsignedXdr) {
+          const signResult = await signAndSubmitXdr(response.data.unsignedXdr);
+
+          if (signResult.status === 'rejected') {
+            return { errorMessage: 'Transaction signature rejected by the wallet.' };
+          }
+          if (signResult.status === 'failed' || !signResult.txHash) {
+            return {
+              errorMessage:
+                signResult.error?.message ??
+                'Wallet signing failed. Please check your wallet app and try again.',
+            };
+          }
+          finalTxHash = signResult.txHash;
+        }
+
         // Refresh project data so the progress bar updates
         void fetchProject();
-
-        if (response.data.status === 'SUCCESS') {
-          return { transactionHash: response.data.transactionHash };
-        }
-        return { errorMessage: response.data.message || 'Transaction did not confirm.' };
+        return { transactionHash: finalTxHash };
       }
 
       return { errorMessage: response.error?.message || 'Contribution failed.' };
@@ -173,35 +388,167 @@ export default function ProjectDetailScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Project banner image */}
+        {project.bannerUrl && (
+          <Image
+            source={{ uri: project.bannerUrl }}
+            style={styles.bannerImage}
+            contentFit="cover"
+            transition={200}
+          />
+        )}
+
         {/* Project header */}
         <Text style={[styles.title, { color: colors.text }]}>{project.name}</Text>
 
-        {!project.isActive && (
-          <View style={[styles.closedBanner, { backgroundColor: colors.danger + '18' }]}>
-            <Ionicons name="lock-closed" size={16} color={colors.danger} />
-            <Text style={[styles.closedText, { color: colors.danger }]}>
-              This project is no longer accepting contributions.
+        {/* On-chain status — always visible so users understand vault state */}
+        <OnChainStatusChip
+          status={project.onChainStatus ?? (project.isActive ? 'ACTIVE' : 'COMPLETED')}
+          colors={colors}
+        />
+
+        {/* Offline draft — resume or discard an interrupted contribution */}
+        {contributionDraft && draftEvaluation && (
+          <View
+            style={[
+              styles.draftBanner,
+              {
+                backgroundColor:
+                  (draftEvaluation.resumable ? colors.accent : colors.warning) + '18',
+                borderColor: (draftEvaluation.resumable ? colors.accent : colors.warning) + '55',
+              },
+            ]}
+            accessible
+            accessibilityLabel={
+              draftEvaluation.resumable
+                ? `${t('contribution_draft.banner_title')}: ${contributionDraft.amount} XLM`
+                : t('contribution_draft.banner_title')
+            }
+          >
+            <View style={styles.draftBannerHeader}>
+              <Ionicons
+                name={draftEvaluation.resumable ? 'time-outline' : 'alert-circle-outline'}
+                size={16}
+                color={draftEvaluation.resumable ? colors.accent : colors.warning}
+              />
+              <Text
+                style={[
+                  styles.draftBannerTitle,
+                  { color: draftEvaluation.resumable ? colors.accent : colors.warning },
+                ]}
+              >
+                {t('contribution_draft.banner_title')}
+              </Text>
+            </View>
+
+            {draftEvaluation.resumable ? (
+              <>
+                <Text style={[styles.draftBannerBody, { color: colors.textSecondary }]}>
+                  {t('contribution_draft.banner_body', {
+                    amount: contributionDraft.amount,
+                    project: project.name,
+                  })}
+                </Text>
+                <Text style={[styles.draftBannerMeta, { color: colors.textSecondary }]}>
+                  {t('contribution_draft.saved_at', {
+                    date: new Date(contributionDraft.savedAt).toLocaleDateString(),
+                  })}
+                </Text>
+                <View style={styles.draftBannerActions}>
+                  <TouchableOpacity
+                    style={[styles.draftResumeButton, { backgroundColor: colors.accent }]}
+                    onPress={() => setShowContributeModal(true)}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('contribution_draft.resume')}
+                  >
+                    <Ionicons name="play-forward-outline" size={14} color="#ffffff" />
+                    <Text style={styles.draftResumeButtonText}>
+                      {t('contribution_draft.resume')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.draftDiscardButton,
+                      {
+                        borderColor: colors.danger + '55',
+                        backgroundColor: colors.danger + '18',
+                      },
+                    ]}
+                    onPress={() => void handleDiscardDraft()}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('contribution_draft.discard')}
+                  >
+                    <Text style={[styles.draftDiscardButtonText, { color: colors.danger }]}>
+                      {t('contribution_draft.discard')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.draftBannerBody, { color: colors.textSecondary }]}>
+                  {draftEvaluation.blocker === 'stale'
+                    ? t('contribution_draft.stale_notice')
+                    : draftEvaluation.blocker === 'invalid_amount'
+                      ? t('contribution_draft.invalid_amount_notice')
+                      : t('contribution_draft.config_missing_notice')}
+                </Text>
+                <View style={styles.draftBannerActions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.draftDiscardButton,
+                      {
+                        borderColor: colors.danger + '55',
+                        backgroundColor: colors.danger + '18',
+                      },
+                    ]}
+                    onPress={() => void handleDiscardDraft()}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('contribution_draft.discard')}
+                  >
+                    <Text style={[styles.draftDiscardButtonText, { color: colors.danger }]}>
+                      {t('contribution_draft.discard')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        )}
+
+        {/* Description */}
+        {project.description && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              {project.description}
             </Text>
           </View>
         )}
 
         {/* Funding progress */}
-        <View
-          style={[
-            styles.fundingCard,
-            { backgroundColor: colors.surface, borderColor: colors.cardBorder },
-          ]}
-        >
-          <View style={styles.fundingHeader}>
-            <Text style={[styles.fundingAmount, { color: colors.text }]}>
-              {formatTokenAmount(project.totalDeposited)} XLM
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Funding Progress</Text>
+          <View
+            style={[
+              styles.fundingCard,
+              { backgroundColor: colors.surface, borderColor: colors.cardBorder },
+            ]}
+          >
+            <View style={styles.fundingHeader}>
+              <Text style={[styles.fundingAmount, { color: colors.text }]}>
+                {formatTokenAmount(project.totalDeposited)} XLM
+              </Text>
+              <Text style={[styles.fundingPercentage, { color: colors.accent }]}>{progress}%</Text>
+            </View>
+            <ProgressBar progress={progress} color={colors.accent} />
+            <Text style={[styles.fundingTarget, { color: colors.textSecondary }]}>
+              Goal: {formatTokenAmount(project.targetAmount)} XLM
             </Text>
-            <Text style={[styles.fundingPercentage, { color: colors.accent }]}>{progress}%</Text>
           </View>
-          <ProgressBar progress={progress} color={colors.accent} />
-          <Text style={[styles.fundingTarget, { color: colors.textSecondary }]}>
-            Goal: {formatTokenAmount(project.targetAmount)} XLM
-          </Text>
         </View>
 
         {/* Stats grid */}
@@ -220,6 +567,30 @@ export default function ProjectDetailScreen() {
           />
         </View>
 
+        {/* Roadmap */}
+        {project.roadmap && project.roadmap.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Roadmap</Text>
+            {project.roadmap.map((item) => (
+              <RoadmapCard key={item.id} item={item} colors={colors} />
+            ))}
+          </View>
+        )}
+
+        {/* Recent contributors */}
+        {contributors.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Contributors</Text>
+            {contributors.slice(0, 5).map((contributor, index) => (
+              <ContributorCard
+                key={`${contributor.publicKey}-${index}`}
+                contributor={contributor}
+                colors={colors}
+              />
+            ))}
+          </View>
+        )}
+
         {/* Owner info */}
         <View style={[styles.infoRow, { borderColor: colors.border }]}>
           <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
@@ -232,6 +603,47 @@ export default function ProjectDetailScreen() {
             {project.owner}
           </Text>
         </View>
+
+        {/* Contract address */}
+        {project.contractAddress && (
+          <View style={[styles.infoRow, { borderColor: colors.border }]}>
+            <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Contract</Text>
+            <Text
+              style={[styles.infoValue, { color: colors.text }]}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+              accessible
+              accessibilityLabel={`Contract address: ${project.contractAddress}`}
+            >
+              {project.contractAddress}
+            </Text>
+          </View>
+        )}
+
+        {/* Last synced */}
+        {project.lastSyncedAt && (
+          <View style={[styles.infoRow, { borderColor: colors.border }]}>
+            <Ionicons name="sync-outline" size={16} color={colors.textSecondary} />
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Synced</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>
+              {new Date(project.lastSyncedAt).toLocaleString()}
+            </Text>
+          </View>
+        )}
+
+        {/* Report button */}
+        <TouchableOpacity
+          style={[styles.reportButton, { borderColor: colors.border }]}
+          onPress={() => setShowReportModal(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Report this project"
+        >
+          <Ionicons name="flag-outline" size={16} color={colors.danger} />
+          <Text style={[styles.reportButtonText, { color: colors.danger }]}>
+            Report this project
+          </Text>
+        </TouchableOpacity>
 
         {/* On-chain notice */}
         <View
@@ -246,6 +658,9 @@ export default function ProjectDetailScreen() {
             held in an on-chain vault until milestones are approved.
           </Text>
         </View>
+
+        {/* Community verification */}
+        <VerificationPanel projectId={projectId} voterPublicKey={stellarPublicKey} />
       </ScrollView>
 
       {/* Contribute button — pinned to bottom */}
@@ -260,6 +675,7 @@ export default function ProjectDetailScreen() {
             style={[styles.contributeButton, { backgroundColor: colors.accent }]}
             onPress={() => setShowContributeModal(true)}
             activeOpacity={0.8}
+            testID="project-contribute-button"
           >
             <Ionicons name="wallet-outline" size={20} color="#ffffff" style={{ marginRight: 8 }} />
             <Text style={styles.contributeButtonText}>Contribute</Text>
@@ -270,9 +686,23 @@ export default function ProjectDetailScreen() {
       {/* Contribution modal */}
       <ContributionModal
         visible={showContributeModal}
+        projectId={projectId}
         projectName={project.name}
-        onClose={() => setShowContributeModal(false)}
+        onClose={() => {
+          setShowContributeModal(false);
+          // Re-sync the banner in case the draft was consumed or updated.
+          void refreshContributionDraft();
+        }}
         onSubmit={handleContribute}
+      />
+
+      {/* Report modal */}
+      <ReportContentModal
+        visible={showReportModal}
+        targetType={ReportType.PROJECT}
+        targetId={String(projectId)}
+        targetLabel={project.name}
+        onClose={() => setShowReportModal(false)}
       />
     </SafeAreaView>
   );
@@ -294,25 +724,110 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
+  // Banner image
+  bannerImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 20,
+  },
+
   // Header
   title: {
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.5,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  closedBanner: {
+
+  // On-chain status chip
+  statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
     padding: 12,
-    borderRadius: 10,
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  statusChipLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  statusChipDesc: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+
+  // Offline contribution draft banner
+  draftBanner: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+  },
+  draftBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  closedText: {
+  draftBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  draftBannerBody: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  draftBannerMeta: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  draftBannerActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+  },
+  draftResumeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  draftResumeButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  draftDiscardButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+  draftDiscardButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    flex: 1,
+  },
+
+  // Section
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 
   // Funding card
@@ -320,7 +835,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     padding: 20,
-    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -381,6 +895,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
+  // Contributor card
+  contributorCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 10,
+  },
+  contributorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  contributorAddress: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  contributorStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingLeft: 26,
+  },
+  contributorAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  contributorCount: {
+    fontSize: 12,
+  },
+
+  // Roadmap card
+  roadmapCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 10,
+  },
+  roadmapHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  roadmapTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    flex: 1,
+  },
+  roadmapDescription: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 8,
+    paddingLeft: 28,
+  },
+  roadmapDate: {
+    fontSize: 12,
+    paddingLeft: 28,
+  },
+
   // Info row
   infoRow: {
     flexDirection: 'row',
@@ -398,6 +972,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     textAlign: 'right',
+  },
+
+  // Report button
+  reportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    gap: 8,
+    marginBottom: 16,
+  },
+  reportButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // Notice card

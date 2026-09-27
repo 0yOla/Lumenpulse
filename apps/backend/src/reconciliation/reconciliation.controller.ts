@@ -33,8 +33,14 @@ export class ReconciliationController {
 
   @Post('run')
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Manually trigger a reconciliation job (admin only)' })
-  @ApiResponse({ status: 202, description: 'Reconciliation job started', type: ReconciliationJob })
+  @ApiOperation({
+    summary: 'Manually trigger a reconciliation job (admin only)',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'Reconciliation job started',
+    type: ReconciliationJob,
+  })
   async triggerReconciliation(): Promise<ReconciliationJob> {
     return this.reconciliationService.runReconciliation('manual');
   }
@@ -42,14 +48,24 @@ export class ReconciliationController {
   @Get('jobs')
   @ApiOperation({ summary: 'List recent reconciliation jobs (admin only)' })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
-  @ApiResponse({ status: 200, description: 'List of reconciliation jobs', type: [ReconciliationJob] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of reconciliation jobs',
+    type: [ReconciliationJob],
+  })
   async listJobs(@Query('limit') limit?: number): Promise<ReconciliationJob[]> {
     return this.reconciliationService.getRecentJobs(limit ? Number(limit) : 20);
   }
 
   @Get('jobs/:id')
-  @ApiOperation({ summary: 'Get a specific reconciliation job by ID (admin only)' })
-  @ApiResponse({ status: 200, description: 'Reconciliation job details', type: ReconciliationJob })
+  @ApiOperation({
+    summary: 'Get a specific reconciliation job by ID (admin only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Reconciliation job details',
+    type: ReconciliationJob,
+  })
   @ApiResponse({ status: 404, description: 'Job not found' })
   async getJob(@Param('id') id: string): Promise<ReconciliationJob> {
     const job = await this.reconciliationService.getJobById(id);

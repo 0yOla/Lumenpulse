@@ -23,7 +23,12 @@ import {
 } from '../src/common/rate-limit/rate-limit.config';
 import { RateLimitGuard } from '../src/common/rate-limit/rate-limit.guard';
 import { RateLimitModule } from '../src/common/rate-limit/rate-limit.module';
-import { RateLimitStorageService } from '../src/common/rate-limit/rate-limit.storage';
+import {
+  RATE_LIMIT_KEYV_STORE,
+  RateLimitStorageService,
+} from '../src/common/rate-limit/rate-limit.storage';
+import { RequestContextService } from '../src/common/services/request-context.service';
+import Keyv from 'keyv';
 import { RequestIdMiddleware } from '../src/common/middleware/request-id.middleware';
 import { ErrorResponse } from '../src/interfaces/error-response.interface';
 
@@ -65,11 +70,21 @@ class SecurityTestController {
   }
 }
 
+// In-memory store so the suite does not depend on a running Redis instance.
+@Module({
+  providers: [
+    { provide: RATE_LIMIT_KEYV_STORE, useValue: new Keyv() },
+    RateLimitStorageService,
+  ],
+  exports: [RateLimitStorageService],
+})
+class InMemoryRateLimitStorageModule {}
+
 @Module({
   imports: [
     RateLimitModule,
     ThrottlerModule.forRootAsync({
-      imports: [RateLimitModule],
+      imports: [InMemoryRateLimitStorageModule],
       inject: [RateLimitStorageService],
       useFactory: (storageService: RateLimitStorageService) =>
         createThrottlerOptions(getRateLimitSettings(), storageService),
@@ -77,6 +92,7 @@ class SecurityTestController {
   ],
   controllers: [SecurityTestController],
   providers: [
+    RequestContextService,
     {
       provide: APP_GUARD,
       useClass: RateLimitGuard,
@@ -98,12 +114,12 @@ describe('Security hardening (e2e)', () => {
   const getHttpServer = (): Server => app.getHttpServer() as Server;
 
   beforeAll(async () => {
-    originalNodeEnv = process.env.NODE_ENV;
-    originalTrackByApiKey = process.env.RATE_LIMIT_TRACK_BY_API_KEY;
-    originalCorsOrigin = process.env.CORS_ORIGIN;
-    process.env.NODE_ENV = 'production';
-    process.env.RATE_LIMIT_TRACK_BY_API_KEY = 'true';
-    process.env.CORS_ORIGIN = 'http://localhost:3000';
+    originalNodeEnv = process['env']['NODE_ENV'];
+    originalTrackByApiKey = process['env']['RATE_LIMIT_TRACK_BY_API_KEY'];
+    originalCorsOrigin = process['env']['CORS_ORIGIN'];
+    process['env']['NODE_ENV'] = 'production';
+    process['env']['RATE_LIMIT_TRACK_BY_API_KEY'] = 'true';
+    process['env']['CORS_ORIGIN'] = 'http://localhost:3000';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [SecurityTestModule],
@@ -115,9 +131,9 @@ describe('Security hardening (e2e)', () => {
   });
 
   afterAll(async () => {
-    process.env.NODE_ENV = originalNodeEnv;
-    process.env.RATE_LIMIT_TRACK_BY_API_KEY = originalTrackByApiKey;
-    process.env.CORS_ORIGIN = originalCorsOrigin;
+    process['env']['NODE_ENV'] = originalNodeEnv;
+    process['env']['RATE_LIMIT_TRACK_BY_API_KEY'] = originalTrackByApiKey;
+    process['env']['CORS_ORIGIN'] = originalCorsOrigin;
     await app.close();
   });
 
@@ -169,6 +185,10 @@ describe('Security hardening (e2e)', () => {
     expect(body.message).toBe('Too many requests. Please try again later.');
     expect(body.requestId).toBeTruthy();
     expect(response.headers['retry-after']).toBeDefined();
+    expect(Number(response.headers['retry-after'])).toBeGreaterThan(0);
+    expect(response.headers['ratelimit-limit']).toBe('2');
+    expect(response.headers['ratelimit-remaining']).toBe('0');
+    expect(response.headers['ratelimit-reset']).toBeDefined();
     expect(response.headers[REQUEST_ID_HEADER.toLowerCase()]).toBe(
       body.requestId,
     );

@@ -1,9 +1,12 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
+type RequestWithRequestId = Request & { requestId?: string };
+
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
+    const request = req as RequestWithRequestId;
     const startTime = Date.now();
 
     // Store original end method with proper typing
@@ -23,10 +26,23 @@ export class LoggerMiddleware implements NestMiddleware {
       encoding?: unknown,
       callback?: unknown,
     ): void => {
+      const correlationId =
+        (typeof (request as { correlationId?: string }).correlationId ===
+          'string' &&
+          (request as { correlationId?: string }).correlationId) ||
+        (typeof request.requestId === 'string' ? request.requestId : 'unknown');
+      const requestId = correlationId;
       const duration = Date.now() - startTime;
-      const requestId =
-        typeof req.requestId === 'string' ? req.requestId : 'unknown';
-      const message = `[Request:${requestId}] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`;
+      const message = JSON.stringify({
+        event: 'http_request_completed',
+        correlationId,
+        requestId,
+        method: req.method,
+        url: req.originalUrl ?? req.url,
+        statusCode: res.statusCode,
+        durationMs: duration,
+        timestamp: new Date().toISOString(),
+      });
 
       // Log based on status code
       if (res.statusCode >= 500) {

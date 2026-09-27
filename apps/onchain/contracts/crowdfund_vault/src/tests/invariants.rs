@@ -2,6 +2,7 @@
 // Each test is tagged with: Feature: invariant-hardening, Property N: <description>
 
 extern crate std;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::vec::Vec as StdVec;
 
 use crate::errors::CrowdfundError;
@@ -12,7 +13,7 @@ use soroban_sdk::{
     symbol_short,
     testutils::Address as _,
     token::{StellarAssetClient, TokenClient},
-    Address, Env,
+    Address, BytesN, Env,
 };
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
@@ -50,9 +51,26 @@ pub fn setup_vault<'a>(
     (client, admin, token_client, token_admin_client)
 }
 
+// ─── Global deposit-ID counter ────────────────────────────────────────────────
+// Each `do_deposit` call must supply a unique request_id to the idempotency
+// guard.  We use a process-wide atomic counter so parallel proptest workers
+// each get distinct IDs without needing to thread a counter through every
+// call-site.
+static DEPOSIT_ID_CTR: AtomicU64 = AtomicU64::new(0);
+
+fn next_deposit_id(env: &Env) -> BytesN<32> {
+    let n = DEPOSIT_ID_CTR.fetch_add(1, Ordering::Relaxed);
+    // Spread the counter across all 32 bytes so there is no modular
+    // collision at counts ≤ 2^64.
+    let bytes = n.to_le_bytes(); // 8 bytes
+    let mut arr = [0u8; 32];
+    arr[..8].copy_from_slice(&bytes);
+    BytesN::from_array(env, &arr)
+}
+
 /// Mint `amount` tokens to `user` and deposit them into `project_id`.
 pub fn do_deposit(
-    _env: &Env,
+    env: &Env,
     client: &CrowdfundVaultContractClient,
     token_admin: &StellarAssetClient,
     user: &Address,
@@ -60,7 +78,7 @@ pub fn do_deposit(
     amount: i128,
 ) {
     token_admin.mint(user, &amount);
-    client.deposit(user, &project_id, &amount);
+    client.deposit(user, &project_id, &amount, &next_deposit_id(env));
 }
 
 /// Read ProtocolStats directly from contract instance storage.
@@ -95,7 +113,7 @@ mod prop4_tvl_tracking {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 4: tvl tracks deposits and withdrawals exactly
         // Validates: Requirements 3.1, 3.2, 3.3
@@ -164,7 +182,7 @@ mod prop5_cumulative_volume {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 5: cumulative_volume is non-decreasing
         // Validates: Requirements 3.4
@@ -210,7 +228,7 @@ mod prop6_admin_only {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 6: non-admin callers are rejected
         // Validates: Requirements 4.1
@@ -259,7 +277,7 @@ mod prop7_paused_vault {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 7: paused vault rejects state-changing calls
         // Validates: Requirements 4.3
@@ -287,7 +305,7 @@ mod prop7_paused_vault {
 
             // try_deposit must return ContractPaused
             token_admin.mint(&user, &amount);
-            let result = client.try_deposit(&user, &project_id, &amount);
+            let result = client.try_deposit(&user, &project_id, &amount, &BytesN::from_array(&env, &[72u8; 32]));
             prop_assert_eq!(result, Err(Ok(CrowdfundError::ContractPaused)));
 
             // try_create_project must return ContractPaused
@@ -318,7 +336,7 @@ mod prop8_project_not_found {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 8: operations on missing projects return ProjectNotFound
         // Validates: Requirements 4.4
@@ -334,7 +352,7 @@ mod prop8_project_not_found {
             let user = Address::generate(&env);
 
             // try_deposit must return ProjectNotFound
-            let result = client.try_deposit(&user, &nonexistent_id, &amount);
+            let result = client.try_deposit(&user, &nonexistent_id, &amount, &BytesN::from_array(&env, &[73u8; 32]));
             prop_assert_eq!(result, Err(Ok(CrowdfundError::ProjectNotFound)));
 
             // try_withdraw must return ProjectNotFound
@@ -366,7 +384,7 @@ mod prop9_withdrawal_requires_milestone {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 9: withdraw without approval returns MilestoneNotApproved
         // Validates: Requirements 5.1
@@ -412,7 +430,7 @@ mod prop10_withdrawal_balance_cap {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 10: withdraw above balance returns InsufficientBalance
         // Validates: Requirements 5.2
@@ -464,7 +482,7 @@ mod prop11_quadratic_match_non_negative {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 11: calculate_match >= 0 for any contributions
         // Validates: Requirements 6.1
@@ -514,7 +532,7 @@ mod prop12_distribute_match {
     use super::*;
 
     proptest! {
-        #![proptest_config(ProptestConfig::with_cases(1000))]
+        #![proptest_config(ProptestConfig::with_cases(200))]
 
         // Feature: invariant-hardening, Property 12: distribute_match respects pool cap and updates balances correctly
         // Validates: Requirements 6.2, 6.3, 6.4

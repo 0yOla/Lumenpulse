@@ -9,9 +9,26 @@ import {
   ReconciliationJob,
   ReconciliationStatus,
 } from './entities/reconciliation-job.entity';
+import { QueryProfilerService } from '../common/profiling/query-profiler.service';
+import { ConfigService } from '@nestjs/config';
+import { MetricsService } from '../metrics/metrics.service';
 
-/** Tolerance for floating-point drift (0.0000001 XLM) */
-const DRIFT_THRESHOLD = 1e-7;
+export const RECONCILIATION_DATASET = 'portfolio_assets';
+export interface ReconciliationThresholds {
+  warning: number;
+  critical: number;
+}
+
+export type DriftSeverity = 'none' | 'warning' | 'critical';
+
+export function evaluateDriftSeverity(
+  delta: number,
+  thresholds: ReconciliationThresholds,
+): DriftSeverity {
+  if (delta >= thresholds.critical) return 'critical';
+  if (delta >= thresholds.warning) return 'warning';
+  return 'none';
+}
 
 @Injectable()
 export class ReconciliationService {
@@ -25,21 +42,73 @@ export class ReconciliationService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly stellarBalanceService: StellarBalanceService,
+    private readonly profiler: QueryProfilerService,
+    private readonly configService: ConfigService,
+    private readonly metricsService: MetricsService,
   ) {}
+
+  private getThresholds(): ReconciliationThresholds {
+    const warning = this.getPositiveConfig(
+      'RECONCILIATION_PORTFOLIO_ASSETS_WARNING_THRESHOLD',
+      1e-7,
+    );
+    const critical = this.getPositiveConfig(
+      'RECONCILIATION_PORTFOLIO_ASSETS_CRITICAL_THRESHOLD',
+      1e-5,
+    );
+    if (critical < warning) {
+      throw new Error(
+        'Reconciliation critical threshold must be >= warning threshold',
+      );
+    }
+    return { warning, critical };
+  }
+
+  private getPositiveConfig(key: string, fallback: number): number {
+    const value = Number(this.configService.get<string>(key, String(fallback)));
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  }
 
   /**
    * Run a full reconciliation pass across all users with linked Stellar accounts.
    * Compares stored portfolio_assets against live Horizon balances, logs drift,
    * and repairs inconsistencies by updating the stored records.
    */
-  async runReconciliation(triggeredBy = 'scheduled'): Promise<ReconciliationJob> {
+  async runReconciliation(
+    triggeredBy = 'scheduled',
+  ): Promise<ReconciliationJob> {
+    return this.profiler.profile(
+      async () => this.doRunReconciliation(triggeredBy),
+      { label: 'ReconciliationService.runReconciliation', thresholdMs: 5000 },
+    );
+  }
+
+  private async doRunReconciliation(
+    triggeredBy = 'scheduled',
+  ): Promise<ReconciliationJob> {
     const job = await this.jobRepo.save(
-      this.jobRepo.create({ triggeredBy, status: ReconciliationStatus.RUNNING }),
+      this.jobRepo.create({
+        triggeredBy,
+        status: ReconciliationStatus.RUNNING,
+      }),
     );
 
-    this.logger.log(`Reconciliation job ${job.id} started (triggeredBy=${triggeredBy})`);
+    this.logger.log(
+      `Reconciliation job ${job.id} started (triggeredBy=${triggeredBy})`,
+    );
 
     const driftDetails: DriftRecord[] = [];
+    const thresholds = this.getThresholds();
+    this.metricsService.setReconciliationThreshold(
+      RECONCILIATION_DATASET,
+      'warning',
+      thresholds.warning,
+    );
+    this.metricsService.setReconciliationThreshold(
+      RECONCILIATION_DATASET,
+      'critical',
+      thresholds.critical,
+    );
     let usersProcessed = 0;
     let driftsDetected = 0;
     let driftsRepaired = 0;
@@ -53,7 +122,11 @@ export class ReconciliationService {
 
       for (const user of usersWithKey) {
         try {
-          const drifts = await this.reconcileUser(user.id, user.stellarPublicKey!);
+          const drifts = await this.reconcileUser(
+            user.id,
+            user.stellarPublicKey,
+            thresholds,
+          );
           driftsDetected += drifts.length;
           driftsRepaired += drifts.filter((d) => d.repaired).length;
           driftDetails.push(...drifts);
@@ -69,7 +142,9 @@ export class ReconciliationService {
     } catch (err) {
       job.status = ReconciliationStatus.FAILED;
       job.errorMessage = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Reconciliation job ${job.id} failed: ${job.errorMessage}`);
+      this.logger.error(
+        `Reconciliation job ${job.id} failed: ${job.errorMessage}`,
+      );
     }
 
     job.usersProcessed = usersProcessed;
@@ -91,7 +166,11 @@ export class ReconciliationService {
    * Compare stored portfolio_assets for one user against live Stellar balances.
    * Repairs any drifted records in-place.
    */
-  private async reconcileUser(userId: string, publicKey: string): Promise<DriftRecord[]> {
+  private async reconcileUser(
+    userId: string,
+    publicKey: string,
+    thresholds: ReconciliationThresholds,
+  ): Promise<DriftRecord[]> {
     const [upstreamBalances, storedAssets] = await Promise.all([
       this.stellarBalanceService.getAccountBalances(publicKey),
       this.assetRepo.find({ where: { userId } }),
@@ -113,6 +192,8 @@ export class ReconciliationService {
 
       if (!stored) {
         // Asset exists on-chain but not in DB — insert it
+        const missingDelta = Math.abs(parseFloat(upstream.balance));
+        const missingSeverity = evaluateDriftSeverity(missingDelta, thresholds);
         const newAsset = this.assetRepo.create({
           userId,
           assetCode: upstream.assetCode,
@@ -127,9 +208,17 @@ export class ReconciliationService {
           assetIssuer: upstream.assetIssuer,
           storedAmount: '0',
           upstreamAmount: upstream.balance,
-          delta: upstream.balance,
+          delta: missingDelta.toFixed(8),
           repaired: true,
+          severity: missingSeverity,
         });
+        if (missingSeverity !== 'none') {
+          this.metricsService.recordReconciliationDrift(
+            RECONCILIATION_DATASET,
+            missingSeverity,
+            missingDelta,
+          );
+        }
 
         this.logger.warn(
           `[DRIFT] User ${userId}: ${upstream.assetCode} missing in DB — inserted ${upstream.balance}`,
@@ -139,8 +228,9 @@ export class ReconciliationService {
 
       const storedAmt = parseFloat(stored.amount);
       const delta = Math.abs(upstreamAmt - storedAmt);
+      const severity = evaluateDriftSeverity(delta, thresholds);
 
-      if (delta > DRIFT_THRESHOLD) {
+      if (severity !== 'none') {
         const drift: DriftRecord = {
           userId,
           assetCode: upstream.assetCode,
@@ -149,12 +239,18 @@ export class ReconciliationService {
           upstreamAmount: upstream.balance,
           delta: delta.toFixed(8),
           repaired: false,
+          severity,
         };
 
         // Repair: update stored amount to match upstream
         stored.amount = upstream.balance;
         await this.assetRepo.save(stored);
         drift.repaired = true;
+        this.metricsService.recordReconciliationDrift(
+          RECONCILIATION_DATASET,
+          severity,
+          delta,
+        );
 
         drifts.push(drift);
 
@@ -168,19 +264,29 @@ export class ReconciliationService {
 
     // Any remaining stored assets have no upstream counterpart — zero them out
     for (const [, orphan] of storedMap) {
+      const orphanDelta = Math.abs(parseFloat(orphan.amount));
+      const orphanSeverity = evaluateDriftSeverity(orphanDelta, thresholds);
       const drift: DriftRecord = {
         userId,
         assetCode: orphan.assetCode,
         assetIssuer: orphan.assetIssuer,
         storedAmount: orphan.amount,
         upstreamAmount: '0',
-        delta: orphan.amount,
+        delta: orphanDelta.toFixed(8),
         repaired: false,
+        severity: orphanSeverity,
       };
 
       orphan.amount = '0';
       await this.assetRepo.save(orphan);
       drift.repaired = true;
+      if (orphanSeverity !== 'none') {
+        this.metricsService.recordReconciliationDrift(
+          RECONCILIATION_DATASET,
+          orphanSeverity,
+          orphanDelta,
+        );
+      }
 
       drifts.push(drift);
 

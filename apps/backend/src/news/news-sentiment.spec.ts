@@ -9,6 +9,9 @@ import { NewsService } from './news.service';
 import { NewsSentimentService } from './news-sentiment.services';
 import { NewsProviderService } from './news-provider.service';
 import { CacheService } from '../cache/cache.service';
+import { QueryProfilerService } from '../common/profiling/query-profiler.service';
+import { JobLockService } from '../scheduler/job-lock.service';
+import { JobHistoryService } from '../scheduler/job-history.service';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -83,6 +86,22 @@ describe('NewsSentimentService', () => {
           useValue: {
             findUnscoredArticles: jest.fn(),
             update: jest.fn(),
+          },
+        },
+        {
+          provide: JobLockService,
+          useValue: {
+            tryAcquire: jest.fn().mockResolvedValue(true),
+            release: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: JobHistoryService,
+          useValue: {
+            start: jest.fn().mockResolvedValue({ startedAt: new Date() }),
+            complete: jest.fn().mockResolvedValue(undefined),
+            fail: jest.fn().mockResolvedValue(undefined),
+            markSkipped: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -238,6 +257,14 @@ describe('NewsService - sentiment methods', () => {
     getLatestArticles: jest.fn(),
   };
 
+  const mockQueryProfilerService = {
+    profile: jest
+      .fn()
+      .mockImplementation(async <T>(fn: () => Promise<T>): Promise<T> => {
+        return await fn();
+      }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -253,6 +280,26 @@ describe('NewsService - sentiment methods', () => {
         {
           provide: CacheService,
           useValue: { invalidateNewsCache: jest.fn() },
+        },
+        {
+          provide: QueryProfilerService,
+          useValue: mockQueryProfilerService,
+        },
+        {
+          provide: JobLockService,
+          useValue: {
+            tryAcquire: jest.fn().mockResolvedValue(true),
+            release: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: JobHistoryService,
+          useValue: {
+            start: jest.fn().mockResolvedValue({ startedAt: new Date() }),
+            complete: jest.fn().mockResolvedValue(undefined),
+            fail: jest.fn().mockResolvedValue(undefined),
+            markSkipped: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();

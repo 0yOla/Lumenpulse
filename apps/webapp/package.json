@@ -7,10 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run",
+    "generate:api-types": "node scripts/generate-api-types.mjs",
+    "check:api-types": "node scripts/generate-api-types.mjs --check",
+    "test": "npm run check:api-types && vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "bundle:budget": "node scripts/check-bundle-budget.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -45,6 +48,7 @@
     "@react-three/drei": "^9.102.3",
     "@react-three/fiber": "^8.15.19",
     "@stellar/freighter-api": "^6.0.1",
+    "@stellar/stellar-sdk": "^14.6.1",
     "@types/node": "20.6.2",
     "@types/react": "18.2.22",
     "@types/react-dom": "18.2.7",
@@ -84,7 +88,9 @@
     "@testing-library/user-event": "^14.5.1",
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/ui": "^1.0.4",
+    "balanced-match": "^4.0.4",
     "jsdom": "^23.0.1",
+    "openapi-typescript": "^7.4.4",
     "vitest": "^1.0.4"
   }
 }

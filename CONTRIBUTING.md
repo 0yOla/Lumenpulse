@@ -11,6 +11,10 @@ Use this document for repo-wide workflow and standards. For area-specific comman
 - [Contracts Guide](document/contracts-contributing.md)
 - [Contributor Review Guide](document/review-guide.md) - how reviewers verify a change before it merges
 
+## Platform Direction
+
+LumenPulse operates on Stellar/Soroban. All new work should align with Stellar-first principles. See [Stellar Migration Notes](document/STELLAR_MIGRATION_NOTES.md) for details on migration from prior chain assumptions and guidance for contributors.
+
 ## How to Contribute
 
 1. Find or open an issue
@@ -35,6 +39,9 @@ git checkout -b docs/short-description
 - Prefer small, reviewable commits.
 - Add/update tests when behavior changes.
 - Update docs when behavior, setup, or usage changes.
+- Add or update an ADR when the change introduces or revises a significant architectural decision, platform boundary, operational pattern, or contract/governance approach.
+
+When an issue changes how services are split, how the backend integrates with Python or external systems, how on-chain state or upgradeability works, or what persistence/eventing pattern is used, the PR should include an ADR entry in [doc/adr/README.md](doc/adr/README.md) and link the related implementation summary or feature write-up.
 
 4. Run validation locally
 - Run the relevant lint/test commands for your area:

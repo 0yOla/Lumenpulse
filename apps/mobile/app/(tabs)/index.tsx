@@ -1,33 +1,36 @@
-/* eslint-disable prettier/prettier */
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { healthApi } from '../../lib/api';
-import config from '../../lib/config';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useLocalization } from '../../src/context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotifications } from '../../contexts/NotificationsContext';
+import { useEnvironment } from '../../contexts/EnvironmentContext';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors } = useLocalization();
+  const { t } = useLocalization();
   const { unreadCount } = useNotifications();
-  const [healthStatus, setHealthStatus] = useState<string>('Checking...');
+  const { environmentConfig } = useEnvironment();
+  const [healthStatus, setHealthStatus] = useState<string>(t('common.loading'));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     testApiConnection();
-  }, []);
+  }, [environmentConfig.apiBaseUrl]);
 
   const testApiConnection = async () => {
     setIsLoading(true);
     const response = await healthApi.check();
     if (response.success && response.data) {
-      setHealthStatus(`Connected to ${config.api.baseUrl}`);
+      setHealthStatus(`${t('home.connected_to')} ${environmentConfig.apiBaseUrl}`);
     } else {
-      setHealthStatus(`Failed: ${response.error?.message || 'Unknown error'}`);
+      setHealthStatus(
+        `${t('home.failed')}: ${response.error?.message || t('errors.something_went_wrong')}`,
+      );
     }
     setIsLoading(false);
   };
@@ -38,8 +41,14 @@ export default function HomeScreen() {
         <ExpoStatusBar style={colors.statusBarStyle} />
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Lumenpulse Mobile</Text>
-            <Text style={[styles.subtitle, { color: colors.accent }]}>
+            <Text
+              style={[styles.title, { color: colors.text }]}
+              accessible
+              accessibilityRole="header"
+            >
+              Lumenpulse Mobile
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.accent }]} accessible>
               Decentralized Crypto Insights
             </Text>
 
@@ -47,8 +56,12 @@ export default function HomeScreen() {
               style={styles.bellButton}
               onPress={() => router.push('/notifications')}
               accessibilityLabel={
-                unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'
+                unreadCount > 0
+                  ? `${t('notifications.title')}, ${unreadCount} ${t('notifications.title')}`
+                  : t('notifications.title')
               }
+              accessibilityState={{ selected: unreadCount > 0 }}
+              accessibilityRole="button"
             >
               <Ionicons name="notifications-outline" size={28} color={colors.accent} />
               {unreadCount > 0 && (
@@ -66,24 +79,37 @@ export default function HomeScreen() {
                 { backgroundColor: colors.card, borderColor: colors.cardBorder },
               ]}
             >
-              <Text style={[styles.cardText, { color: colors.text }]}>
-                Portfolio &amp; News aggregation coming soon.
+              <Text style={[styles.cardText, { color: colors.text }]} accessible>
+                {t('home.coming_soon')}
               </Text>
             </View>
 
             <View style={[styles.glassCard, styles.statusCard]}>
-              <Text style={styles.statusLabel}>API Status:</Text>
+              <Text style={styles.statusLabel} accessible>
+                {t('home.api_status')}
+              </Text>
               {isLoading ? (
-                <ActivityIndicator color="#7a85ff" style={styles.loader} />
+                <ActivityIndicator
+                  color="#7a85ff"
+                  style={styles.loader}
+                  accessibilityLabel={t('common.loading')}
+                />
               ) : (
-                <Text style={styles.statusText}>{healthStatus}</Text>
+                <Text style={styles.statusText} accessible>
+                  {healthStatus}
+                </Text>
               )}
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={testApiConnection}
                 disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.retry')}
+                accessibilityHint={t('home.test_connection')}
               >
-                <Text style={styles.retryButtonText}>Test Connection</Text>
+                <Text style={styles.retryButtonText} accessible>
+                  {t('home.test_connection')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -93,8 +119,13 @@ export default function HomeScreen() {
               styles.button,
               { backgroundColor: colors.accentSecondary, shadowColor: colors.accentSecondary },
             ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('home.get_started')}
+            accessibilityHint="Navigate to main features"
           >
-            <Text style={styles.buttonText}>Get Started</Text>
+            <Text style={styles.buttonText} accessible>
+              {t('home.get_started')}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

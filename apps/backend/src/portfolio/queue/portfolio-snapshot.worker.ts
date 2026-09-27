@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Job, Queue, Worker } from 'bullmq';
-import IORedis from 'ioredis';
+import { Job, Queue, Worker, type ConnectionOptions } from 'bullmq';
+import { type Redis } from 'ioredis';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { MetricsService } from '../../metrics/metrics.service';
@@ -44,7 +44,7 @@ export class PortfolioSnapshotWorker implements OnModuleInit, OnModuleDestroy {
       PortfolioSnapshotBatchJobData | PortfolioSnapshotUserJobData
     >,
     @Inject(PORTFOLIO_SNAPSHOT_CONNECTION)
-    private readonly connection: IORedis,
+    private readonly connection: Redis,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly portfolioService: PortfolioService,
@@ -74,7 +74,8 @@ export class PortfolioSnapshotWorker implements OnModuleInit, OnModuleDestroy {
     this.worker = new Worker<
       PortfolioSnapshotBatchJobData | PortfolioSnapshotUserJobData
     >(PORTFOLIO_SNAPSHOT_QUEUE_NAME, async (job) => this.process(job), {
-      connection: this.connection,
+      // BullMQ's ConnectionOptions can resolve to a different bundled ioredis type.
+      connection: this.connection as unknown as ConnectionOptions,
       concurrency: this.concurrency,
     });
 

@@ -23,6 +23,8 @@ import { calculatePortfolioPerformance } from './utils/portfolio-performance.uti
 import { PortfolioSnapshotQueueService } from './queue/portfolio-snapshot.queue.service';
 import { PortfolioSnapshotBatchStatus } from './queue/portfolio-snapshot.types';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
+import { MaterializedSnapshotService } from './materialized-snapshot.service';
+import { QueryProfilerService } from '../common/profiling/query-profiler.service';
 
 @Injectable()
 export class PortfolioService {
@@ -40,6 +42,8 @@ export class PortfolioService {
     private readonly stellarService: StellarService,
     private readonly priceService: PriceService,
     private readonly snapshotQueueService: PortfolioSnapshotQueueService,
+    private readonly materializedSnapshotService: MaterializedSnapshotService,
+    private readonly profiler: QueryProfilerService,
   ) {}
 
   /**
@@ -67,51 +71,53 @@ export class PortfolioService {
       const stellarBalances =
         await this.stellarBalanceService.getAccountBalances(user.id);
 
-      // Calculate USD values for each asset
-      assetBalances = await Promise.all(
-        stellarBalances.map(async (balance) => {
-          const price = await this.priceService.getCurrentPrice(
-            balance.assetCode,
-          );
-          const valueUsd = parseFloat(balance.balance) * price;
-
-          totalValueUsd += valueUsd;
-
-          return {
-            assetCode: balance.assetCode,
-            assetIssuer: balance.assetIssuer,
-            amount: balance.balance,
-            valueUsd,
-          };
-        }),
+      // FIX (N+1 → 1): batch-fetch all asset prices in a single call instead
+      // of calling getCurrentPrice() once per balance inside a .map().
+      const enriched = await this.stellarBalanceService.getAssetValuesUsd(
+        stellarBalances.map((b) => ({
+          assetCode: b.assetCode,
+          assetIssuer: b.assetIssuer,
+          amount: b.balance,
+        })),
       );
+
+      assetBalances = enriched.map((e) => {
+        totalValueUsd += e.valueUsd;
+        return {
+          assetCode: e.assetCode,
+          assetIssuer: e.assetIssuer,
+          amount: e.amount,
+          valueUsd: e.valueUsd,
+        };
+      });
     } catch {
       this.logger.warn(
         `Failed to fetch Stellar balances for user ${userId}, using portfolio assets as fallback`,
       );
 
-      // Fallback to portfolio_assets table if Stellar fetch fails
+      // Fallback to portfolio_assets table if Stellar fetch fails.
+      // FIX (N+1 → 1): batch-fetch all prices instead of one per asset.
       const portfolioAssets = await this.assetRepository.find({
         where: { userId },
       });
 
-      assetBalances = await Promise.all(
-        portfolioAssets.map(async (asset) => {
-          const price = await this.priceService.getCurrentPrice(
-            asset.assetCode,
-          );
-          const valueUsd = parseFloat(asset.amount) * price;
-
-          totalValueUsd += valueUsd;
-
-          return {
-            assetCode: asset.assetCode,
-            assetIssuer: asset.assetIssuer,
-            amount: asset.amount,
-            valueUsd,
-          };
-        }),
+      const enriched = await this.stellarBalanceService.getAssetValuesUsd(
+        portfolioAssets.map((a) => ({
+          assetCode: a.assetCode,
+          assetIssuer: a.assetIssuer,
+          amount: a.amount,
+        })),
       );
+
+      assetBalances = enriched.map((e) => {
+        totalValueUsd += e.valueUsd;
+        return {
+          assetCode: e.assetCode,
+          assetIssuer: e.assetIssuer,
+          amount: e.amount,
+          valueUsd: e.valueUsd,
+        };
+      });
     }
 
     // Create and save snapshot
@@ -121,7 +127,37 @@ export class PortfolioService {
       totalValueUsd: totalValueUsd.toFixed(2),
     });
 
-    return await this.snapshotRepository.save(snapshot);
+    const savedSnapshot = await this.snapshotRepository.save(snapshot);
+
+    // Update materialized snapshot for fast reads
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: ['stellarAccounts'],
+      });
+      const hasLinkedAccount =
+        user?.stellarAccounts && user.stellarAccounts.length > 0;
+
+      const allocation =
+        this.materializedSnapshotService.computeAllocation(assetBalances);
+
+      await this.materializedSnapshotService.upsertForUser({
+        userId,
+        totalValueUsd: savedSnapshot.totalValueUsd,
+        assetBalances,
+        assetAllocation: allocation,
+        hasLinkedAccount: !!hasLinkedAccount,
+        sourceSnapshotId: savedSnapshot.id,
+      });
+    } catch (error: unknown) {
+      // Log but don't fail the snapshot creation if materialization fails
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `Failed to update materialized snapshot for user ${userId}: ${message}`,
+      );
+    }
+
+    return savedSnapshot;
   }
 
   /**
@@ -134,12 +170,16 @@ export class PortfolioService {
   ): Promise<PortfolioHistoryResponseDto> {
     const skip = (page - 1) * limit;
 
-    const [snapshots, total] = await this.snapshotRepository.findAndCount({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-      skip,
-      take: limit,
-    });
+    const [snapshots, total] = await this.profiler.profile(
+      () =>
+        this.snapshotRepository.findAndCount({
+          where: { userId },
+          order: { createdAt: 'DESC' },
+          skip,
+          take: limit,
+        }),
+      { label: 'PortfolioService.getPortfolioHistory', thresholdMs: 150 },
+    );
 
     const snapshotDtos: PortfolioSnapshotDto[] = snapshots.map((snapshot) => ({
       id: snapshot.id,
@@ -159,15 +199,29 @@ export class PortfolioService {
   }
 
   /**
-   * Get portfolio summary (latest snapshot) for the mobile dashboard
-   * Returns total USD value and individual asset balances
+   * Get portfolio summary (latest snapshot) for the mobile dashboard.
+   * Uses the materialized snapshot for fast reads — falls back to
+   * querying portfolio_snapshots if no materialized row exists yet.
    */
   async getPortfolioSummary(
     userId: string,
   ): Promise<PortfolioSummaryResponseDto> {
     this.logger.log(`Fetching portfolio summary for user ${userId}`);
 
-    // Check if user has any linked Stellar accounts
+    // Fast path: read from materialized snapshot (O(1) by userId index)
+    const materialized =
+      await this.materializedSnapshotService.getForUser(userId);
+
+    if (materialized) {
+      return {
+        totalValueUsd: materialized.totalValueUsd,
+        assets: materialized.assetBalances,
+        lastUpdated: materialized.updatedAt,
+        hasLinkedAccount: materialized.hasLinkedAccount,
+      };
+    }
+
+    // Fallback: compute from raw data (first-time access or migration in progress)
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['stellarAccounts'],
@@ -193,13 +247,32 @@ export class PortfolioService {
     });
 
     if (!latestSnapshot) {
-      // User has accounts but no snapshot yet
       return {
         totalValueUsd: '0.00',
         assets: [],
         lastUpdated: null,
-        hasLinkedAccount: true, // Important: set to true even without snapshot
+        hasLinkedAccount: true,
       };
+    }
+
+    // Populate materialized snapshot for future fast reads
+    try {
+      const allocation = this.materializedSnapshotService.computeAllocation(
+        latestSnapshot.assetBalances,
+      );
+      await this.materializedSnapshotService.upsertForUser({
+        userId,
+        totalValueUsd: latestSnapshot.totalValueUsd,
+        assetBalances: latestSnapshot.assetBalances,
+        assetAllocation: allocation,
+        hasLinkedAccount: true,
+        sourceSnapshotId: latestSnapshot.id,
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `Failed to backfill materialized snapshot for user ${userId}: ${message}`,
+      );
     }
 
     return {
@@ -272,6 +345,64 @@ export class PortfolioService {
     };
   }
 
+  async getPortfolioSummaryForAccount(
+    userId: string,
+    publicKey: string,
+  ): Promise<PortfolioSummaryWithCurrencyResponseDto> {
+    this.logger.log(
+      `Fetching portfolio summary for linked account ${publicKey}`,
+    );
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['stellarAccounts'],
+    });
+
+    const linkedAccount = user?.stellarAccounts?.find(
+      (account) => account.isActive && account.publicKey === publicKey,
+    );
+
+    if (!linkedAccount) {
+      throw new NotFoundException('Linked Stellar account not found');
+    }
+
+    const balances =
+      await this.stellarBalanceService.getAccountBalances(publicKey);
+
+    // FIX (N+1 → 1): batch-fetch USD values for all balances in a single
+    // price call instead of calling getAssetValueUsd() once per balance.
+    const enriched = await this.stellarBalanceService.getAssetValuesUsd(
+      balances.map((b) => ({
+        assetCode: b.assetCode,
+        assetIssuer: b.assetIssuer,
+        amount: b.balance,
+      })),
+    );
+
+    const assets = enriched.map((e) => ({
+      assetCode: e.assetCode,
+      assetIssuer: e.assetIssuer,
+      amount: e.amount,
+      value: e.valueUsd,
+      valueUsd: e.valueUsd,
+    }));
+
+    const totalValueUsd = assets.reduce(
+      (sum, asset) => sum + asset.valueUsd,
+      0,
+    );
+
+    return {
+      totalValue: totalValueUsd.toFixed(2),
+      currency: CurrencyCode.USD,
+      totalValueUsd: totalValueUsd.toFixed(2),
+      assets,
+      lastUpdated: new Date(),
+      hasLinkedAccount: true,
+      exchangeRate: 1,
+    };
+  }
+
   // /**
   //  * Get portfolio summary (latest snapshot) for the mobile dashboard
   //  * Returns total USD value and individual asset balances
@@ -317,11 +448,68 @@ export class PortfolioService {
         `Snapshot batch queued (cron). BatchId=${progress.batchId}`,
       );
     } catch (error: unknown) {
-      this.logger.error(
-        `Failed to queue snapshot batch job: ${
-          error instanceof Error ? error.message : 'Unknown error'
-        }`,
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to queue snapshot batch job: ${message}`);
+    }
+  }
+
+  /**
+   * Scheduled job to refresh materialized snapshots.
+   * Runs every 6 hours to catch any users whose materialized snapshot
+   * might be stale (e.g. if the materialized upsert failed during
+   * snapshot creation).
+   */
+  @Cron('0 */6 * * *', { name: 'materialized-snapshot-refresh' })
+  async refreshMaterializedSnapshots(): Promise<void> {
+    this.logger.log('Starting scheduled materialized snapshot refresh');
+    try {
+      // Refresh materialized snapshots for users that have snapshots
+      // but no materialized row (migration gap or upsert failure)
+      const staleUsers: { userId: string }[] = await this.snapshotRepository
+        .createQueryBuilder('ps')
+        .select('ps.userId', 'userId')
+        .groupBy('ps.userId')
+        .having(
+          'ps.userId NOT IN (SELECT "userId" FROM portfolio_materialized_snapshots)',
+        )
+        .getRawMany();
+
+      let refreshed = 0;
+
+      // FIX (sequential N+1 → batched): process stale users concurrently
+      // with a concurrency cap of 10 to avoid overwhelming downstream
+      // services.  Previously this was a sequential `for` loop that awaited
+      // one user before starting the next.
+      const CONCURRENCY = 10;
+      for (let i = 0; i < staleUsers.length; i += CONCURRENCY) {
+        const batch = staleUsers.slice(i, i + CONCURRENCY);
+        const results = await Promise.allSettled(
+          batch.map(({ userId }) =>
+            this.materializedSnapshotService.refreshForUser(userId),
+          ),
+        );
+        for (let j = 0; j < results.length; j++) {
+          const result = results[j];
+          if (result.status === 'fulfilled') {
+            if (result.value) refreshed++;
+          } else {
+            const message =
+              result.reason instanceof Error
+                ? result.reason.message
+                : 'Unknown error';
+            this.logger.warn(
+              `Failed to refresh materialized snapshot for user ${batch[j].userId}: ${message}`,
+            );
+          }
+        }
+      }
+
+      this.logger.log(
+        `Materialized snapshot refresh complete. Refreshed ${refreshed} users.`,
       );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Materialized snapshot refresh failed: ${message}`);
     }
   }
 
@@ -383,12 +571,9 @@ export class PortfolioService {
   /**
    * Get portfolio asset allocation breakdown.
    *
-   * Aggregates assets across all linked Stellar accounts for a user,
-   * calculates the USD value of each asset, and determines its percentage
-   * of the total portfolio value.
-   *
-   * @param userId The ID of the user.
-   * @returns An object with the total portfolio value and an array of assets with their allocation details.
+   * Uses the materialized snapshot for fast reads when available.
+   * Falls back to computing from Stellar network when no materialized
+   * row exists (first-time access or migration in progress).
    */
   async getAssetAllocation(userId: string): Promise<{
     totalValueUsd: number;
@@ -402,6 +587,18 @@ export class PortfolioService {
   }> {
     this.logger.log(`Fetching asset allocation for user ${userId}`);
 
+    // Fast path: read from materialized snapshot
+    const materialized =
+      await this.materializedSnapshotService.getForUser(userId);
+
+    if (materialized?.assetAllocation) {
+      return {
+        totalValueUsd: parseFloat(materialized.totalValueUsd),
+        allocation: materialized.assetAllocation,
+      };
+    }
+
+    // Fallback: compute from Stellar network (slow path)
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['stellarAccounts'],
@@ -427,7 +624,9 @@ export class PortfolioService {
         .getAccountBalances(account.publicKey)
         .catch((error) => {
           this.logger.warn(
-            `Failed to fetch balances for account ${account.publicKey}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            `Failed to fetch balances for account ${account.publicKey}: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
           );
           return []; // Return empty array on failure to not break Promise.all
         }),
@@ -454,22 +653,16 @@ export class PortfolioService {
       }
     }
 
-    // Calculate USD value for each aggregated asset concurrently
-    const allocationWithValue = await Promise.all(
-      Array.from(aggregatedBalances.values()).map(async (asset) => {
-        const valueUsd = await this.stellarBalanceService.getAssetValueUsd(
-          asset.assetCode,
-          asset.assetIssuer,
-          asset.amount.toString(),
-        );
-        return {
+    // FIX (N+1 → 1): batch-compute USD values for all aggregated assets in a
+    // single price fetch instead of calling getAssetValueUsd() once per asset.
+    const allocationWithValue =
+      await this.stellarBalanceService.getAssetValuesUsd(
+        Array.from(aggregatedBalances.values()).map((asset) => ({
           assetCode: asset.assetCode,
           assetIssuer: asset.assetIssuer,
           amount: asset.amount.toString(),
-          valueUsd,
-        };
-      }),
-    );
+        })),
+      );
 
     // Calculate total value from the results
     const totalValueUsd = allocationWithValue.reduce(

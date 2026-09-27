@@ -8,8 +8,19 @@ import {
 
 export enum NotificationType {
   ANOMALY = 'anomaly',
+  DRIFT = 'drift',
   SENTIMENT_SPIKE = 'sentiment_spike',
   SYSTEM = 'system',
+  PROJECT = 'project',
+  CONTRIBUTION = 'contribution',
+  MILESTONE = 'milestone',
+  GOVERNANCE = 'governance',
+  TOKEN = 'token',
+  POOL = 'pool',
+  PRICE = 'price',
+  MODULE = 'module',
+  ADMIN = 'admin',
+  REPUTATION = 'reputation',
 }
 
 export enum NotificationSeverity {
@@ -21,6 +32,10 @@ export enum NotificationSeverity {
 
 @Entity('notifications')
 @Index(['userId', 'createdAt'])
+@Index(['read'])
+@Index(['type'])
+@Index(['severity'])
+@Index(['createdAt'])
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;

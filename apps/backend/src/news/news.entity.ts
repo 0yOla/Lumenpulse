@@ -13,6 +13,7 @@ import {
 @Index(['source'])
 @Index(['sentimentScore'])
 @Index(['source', 'publishedAt'])
+@Index(['category'])
 export class News {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -35,7 +36,7 @@ export class News {
   @Column('text', { array: true, nullable: true, default: [] })
   tags: string[];
 
-  @Column({ nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   category: string | null;
 
   @CreateDateColumn()

@@ -1,0 +1,469 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "retry": "重试",
+    "back": "返回",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "done": "完成",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息"
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "登录您的账户",
+      "email_label": "邮箱",
+      "email_placeholder": "请输入邮箱",
+      "password_label": "密码",
+      "password_placeholder": "请输入密码",
+      "sign_in_button": "登录",
+      "sign_up_link": "没有账户？注册",
+      "bypass_login": "(Debug) 跳过登录到仪表板",
+      "errors": {
+        "email_required": "请输入邮箱地址",
+        "email_invalid": "请输入有效邮箱",
+        "password_required": "请输入密码",
+        "password_min_length": "密码至少6位",
+        "login_failed": "登录失败",
+        "login_failed_message": "登录时发生错误，请重试。"
+      }
+    },
+    "register": {
+      "title": "创建账户",
+      "subtitle": "加入 Lumenpulse",
+      "email_label": "邮箱",
+      "email_placeholder": "请输入邮箱",
+      "password_label": "密码",
+      "password_placeholder": "请输入密码",
+      "confirm_password_label": "确认密码",
+      "confirm_password_placeholder": "确认您的密码",
+      "create_account_button": "创建账户",
+      "login_link": "已有账户？登录",
+      "errors": {
+        "email_required": "请输入邮箱地址",
+        "email_invalid": "请输入有效邮箱",
+        "password_required": "请输入密码",
+        "password_min_length": "密码至少6位",
+        "passwords_mismatch": "两次输入的密码不一致",
+        "registration_failed": "注册失败",
+        "registration_failed_message": "注册时发生错误，请重试。"
+      }
+    }
+  },
+  "navigation": {
+    "home": "首页",
+    "projects": "项目",
+    "grants": "资助",
+    "discover": "发现",
+    "portfolio": "投资组合",
+    "transactions": "交易",
+    "news": "新闻",
+    "settings": "设置",
+    "watchlist": "关注列表",
+    "notifications": "通知",
+    "manage_accounts": "管理账户",
+    "notification_settings": "通知设置",
+    "cache": "缓存"
+  },
+  "home": {
+    "title": "Lumenpulse 移动端",
+    "subtitle": "去中心化加密洞察",
+    "api_status": "API 状态:",
+    "connected_to": "已连接到",
+    "failed": "连接失败",
+    "test_connection": "测试连接",
+    "get_started": "开始使用",
+    "coming_soon": "投资组合和新闻聚合即将上线。"
+  },
+  "projects": {
+    "title": "项目",
+    "no_projects": "暂无众筹项目",
+    "loading": "加载项目中...",
+    "error": "无法加载项目",
+    "retry": "重试",
+    "status": {
+      "closed": "已关闭"
+    },
+    "contributors": "{{count}} 位贡献者",
+    "contributors_plural": "位贡献者",
+    "funded": "已筹集"
+  },
+  "project_detail": {
+    "about": "项目简介",
+    "funding_progress": "筹集进度",
+    "remaining": "剩余",
+    "contributors": "贡献者",
+    "roadmap": "路线图",
+    "recent_contributors": "近期贡献者",
+    "owner": "项目所有者",
+    "report": "举报此项目",
+    "report_reason": {
+      "spam": "垃圾信息",
+      "fraud": "欺诈",
+      "misleading": "误导性信息"
+    },
+    "report_confirmation": "感谢您的举报，已提交给我们的审核团队。",
+    "contribute": "立即贡献",
+    "closed_banner": "此项目不再接受贡献。",
+    "on_chain_notice": "贡献由 Stellar 网络上的 Soroban 智能合约保障。资金在里程碑获得批准前保留在链上金库中。"
+  },
+  "contribution_modal": {
+    "title": "贡献到项目",
+    "amount_label": "贡献金额（XLM）",
+    "estimated_fee": "预估网络费用：约 {{amount}} XLM",
+    "disclaimer": "这是 Stellar 网络上的链上交易。除非项目被取消，否则贡献不可退款。",
+    "amount_hint": "请输入最多 {{decimals}} 位小数的金额。最低 {{min}} XLM。",
+    "clear_amount": "清除金额",
+    "submit": "确认贡献",
+    "submitting": "提交中...",
+    "done": "完成",
+    "success": "贡献成功！",
+    "success_message": "您已向 {{project}} 贡献了 {{amount}} XLM。",
+    "failed": "贡献失败",
+    "transaction_hash": "交易哈希"
+  },
+  "contribution_draft": {
+    "banner_title": "未完成的贡献",
+    "banner_body": "您已开始向 {{project}} 贡献 {{amount}} XLM。",
+    "saved_at": "保存于 {{date}}",
+    "resume": "继续",
+    "discard": "放弃",
+    "restored_notice": "已恢复草稿 —— 请核对金额，确认后即可提交。",
+    "stale_notice": "该草稿已过期，无法继续。",
+    "invalid_amount_notice": "该草稿的金额已无效，无法继续。",
+    "config_missing_notice": "测试网配置不可用，暂时无法继续该草稿。"
+  },
+  "report_modal": {
+    "title": "举报内容",
+    "category_label": "问题类型是什么？",
+    "reason_label": "补充说明（可选）",
+    "reason_placeholder": "添加有助于审核团队处理的详细信息",
+    "category_spam": "垃圾信息",
+    "category_fraud": "欺诈或诈骗",
+    "category_misleading": "误导性信息",
+    "category_inappropriate": "不当内容",
+    "category_copyright": "版权侵权",
+    "category_other": "其他",
+    "submit": "提交举报",
+    "submitting": "提交中...",
+    "success_title": "举报已提交",
+    "success_body": "感谢您的举报，我们的审核团队将进行审查。",
+    "generic_error": "举报提交失败，请重试。"
+  },
+  "grants": {
+    "title": "资助轮次",
+    "description": "二次方资助 - 广泛的社区支持决定匹配金额",
+    "no_rounds": "暂无活跃的资助轮次。",
+    "loading": "加载轮次中...",
+    "error": "无法加载轮次",
+    "matching_pool": "匹配池",
+    "ends": "结束于",
+    "start": "开始于",
+    "eligible_projects": "符合条件项目",
+    "project": "项目",
+    "contributors": "位贡献者",
+    "contributed": "已贡献",
+    "qf_explanation": "二次方资助奖励获得广泛社区支持的项目。100位贡献者每人贡献1美元的项目比1位贡献者贡献100美元的项目获得更多的匹配资金。",
+    "status": {
+      "active": "活跃中",
+      "pending": "待开始",
+      "ended": "已结束",
+      "finalized": "已确认",
+      "distributed": "已分配"
+    },
+    "round_hint": "双击查看轮次详情"
+  },
+  "grant_detail": {
+    "eligible_projects": "符合条件项目",
+    "start": "开始于",
+    "end": "结束于",
+    "of_pool": "占总池",
+    "contributors": "位贡献者",
+    "contributed": "已贡献",
+    "estimated_allocations": "预计分配",
+    "funding_progress": "筹资进度",
+    "milestones": "里程碑",
+    "no_eligible_projects": "该轮次尚未添加符合条件的项目。"
+  },
+  "news": {
+    "title": "新闻",
+    "saved": "已保存",
+    "no_news": "暂无新闻",
+    "showing_cached": "显示缓存新闻 - 下拉刷新",
+    "read": "已读",
+    "unread": "未读",
+    "mark_as_read": "点击标记为已读",
+    "mark_all": "全部标记为已读",
+    "go_back": "返回"
+  },
+  "notifications": {
+    "title": "通知",
+    "no_notifications": "暂无通知",
+    "notification_text": "价格提醒和账户活动将显示在此处。"
+  },
+  "watchlist": {
+    "title": "关注列表",
+    "empty_title": "关注列表为空",
+    "empty_subtitle": "在发现标签页中星标资产以在此处跟踪",
+    "remove": "从关注列表移除",
+    "conflict_banner": "部分项目存在同步冲突。下拉刷新。",
+    "rollback_banner": "部分项目已恢复为服务器状态。下拉刷新。",
+    "syncing_banner": "变更将在恢复网络时同步。",
+    "last_synced": "上次同步: {{time}}"
+  },
+  "discover": {
+    "title": "发现",
+    "search_placeholder": "按名称或代码搜索…",
+    "no_results": "无结果",
+    "try_search": "尝试搜索 \"USDC\" 或 \"XLM\"",
+    "showing_cached": "显示缓存数据 - 下拉刷新",
+    "couldnt_load": "无法加载资产",
+    "retry": "重试",
+    "price": "价格 / 24小时",
+    "asset": "资产",
+    "search_label": "搜索资产",
+    "asset_hint": "双击查看资产详情",
+    "add_to_watchlist": "添加到关注列表",
+    "remove_from_watchlist": "从关注列表移除"
+  },
+  "portfolio": {
+    "title": "投资组合",
+    "total_balance": "总资产价值",
+    "recent_transactions": "最近交易",
+    "login_required": "需要登录",
+    "showing_cached": "显示缓存数据 - 下拉刷新",
+    "no_assets": "暂无资产"
+  },
+  "transactions": {
+    "title": "交易",
+    "login_required": "请先登录",
+    "failed": "无法加载交易记录",
+    "payment": "支付",
+    "swap": "交换",
+    "details": "交易详情",
+    "m_ago": "分钟前",
+    "h_ago": "小时前",
+    "today": "今天",
+    "yesterday": "昨天",
+    "hash": "交易哈希",
+    "type": "类型",
+    "amount": "金额",
+    "date": "日期",
+    "details_hint": "双击查看完整详情"
+  },
+  "settings": {
+    "title": "设置",
+    "account_preferences": "账户与偏好",
+    "appearance": "外观",
+    "app_info": "应用信息",
+    "manage_accounts": {
+      "title": "管理账户",
+      "description": "使用二维码添加关联的 Stellar 公钥，或在不再需要时移除。",
+      "qr_code": "扫描二维码添加账户",
+      "scan_hint": "扫码器支持原生 Stellar 公钥或包含公钥的二维码。",
+      "nickname_placeholder": "例如：交易钱包",
+      "nickname_label": "账户昵称（可选）",
+      "add_account_title": "添加账户",
+      "linked_accounts": "已关联账户",
+      "no_linked_accounts": "暂无关联账户",
+      "scan_to_attach": "扫描 Stellar 账户二维码，将其关联到此账户。",
+      "remove_confirm": "移除关联账户",
+      "remove_message": "从本账户移除 {{account}}？",
+      "remove": "移除",
+      "cancel": "取消",
+      "camera_permission": "需要相机权限",
+      "camera_permission_message": "允许访问相机以扫描 Stellar 公钥二维码。",
+      "unsupported_qr": "不支持的二维码",
+      "unsupported_qr_message": "请扫描原生 Stellar 公钥或包含公钥的二维码。",
+      "account_linked": "账户已关联",
+      "account_linked_message": "现在可在设置中使用。",
+      "could_not_link": "无法关联账户",
+      "could_not_remove": "无法移除账户",
+      "linked": "已关联",
+      "label": "标签",
+      "remove_button": "移除",
+      "scanner_hint": "将相机对准 Stellar 公钥二维码。"
+    },
+    "notification_settings": {
+      "title": "通知设置",
+      "description": "切换您希望接收的提醒。每个更改都会立即同步到后端。",
+      "price_alerts": "价格提醒",
+      "price_alerts_desc": "当追踪的市场价格发生显著变化时立即推送通知。",
+      "news_alerts": "新闻提醒",
+      "news_alerts_desc": "与您投资组合相关的重要生态和市场头条。",
+      "security_alerts": "安全提醒",
+      "security_alerts_desc": "关键账户、钓鱼和可疑活动通知。"
+    },
+    "theme": {
+      "system": "跟随系统",
+      "light": "浅色",
+      "dark": "深色"
+    },
+    "biometric_lock": {
+      "enable": "启用生物识别锁",
+      "description": "每次冷启动应用时要求 Face ID、指纹或密码验证。",
+      "not_supported": "不支持生物识别",
+      "not_supported_message": "此设备不支持生物识别认证。",
+      "no_biometrics": "未注册生物识别",
+      "no_biometrics_message": "请先在设备设置中设置 Face ID 或指纹，然后再启用此锁定。",
+      "confirm_biometric": "确认生物识别锁",
+      "update_failed": "更新失败",
+      "update_failed_message": "无法更新生物识别锁偏好设置。请重试。"
+    },
+    "network": {
+      "title": "网络",
+      "active": "当前网络",
+      "testnet": "测试网",
+      "mainnet": "主网",
+      "endpoint_not_configured": "端点未配置",
+      "mainnet_unavailable": "主网不可用",
+      "mainnet_unavailable_message": "请先配置主网 API 和 Soroban RPC 端点再切换。",
+      "mainnet_confirmation_title": "切换到主网？",
+      "mainnet_confirmation_message": "您即将切换到主网，其中真实资产处于风险中。所有缓存数据将被清除，您的钱包需要重新选择。此操作无法撤销。",
+      "mainnet_confirmation_confirm": "切换到主网"
+    },
+    "version": "版本",
+    "environment": "环境",
+    "environment_production": "生产环境",
+    "environment_contributor": "贡献者构建版",
+    "platform": "平台",
+    "logout": "退出登录",
+    "status_info": {
+      "title": "状态与发布说明",
+      "description": "查看环境详情和最近的变更",
+      "active_env": "活动环境",
+      "api_url": "API 基础 URL",
+      "stellar_net": "Stellar 网络",
+      "soroban_rpc": "Soroban RPC URL",
+      "contract_id": "合约 ID",
+      "network_status": "网络连接状况",
+      "online": "已连接",
+      "offline": "断开连接",
+      "last_checked": "上次检查时间: {{time}}",
+      "notes_title": "版本说明",
+      "no_notes": "当前无法获取版本发布说明。",
+      "version_prefix": "版本 {{version}}",
+      "published": "发布日期: {{date}}",
+      "testing": "测试中..."
+    },
+    "data_privacy": {
+      "title": "数据与隐私",
+      "description": "查看 LumenPulse 存储在本设备上的所有数据，按类别或一次性清除，并选择要分享的诊断信息。",
+      "stored_data": "存储在本设备",
+      "privacy_controls": "隐私设置",
+      "total_stored": "存储总量",
+      "clear": "清除",
+      "item_count_other": "{{count}} 项",
+      "clear_category_title": "清除{{category}}？",
+      "clear_category_message": "这将删除本设备上存储的所有{{category}}。联网后可重新下载。",
+      "category_cleared": "已清除{{category}}。",
+      "clear_failed": "无法清除该数据，请重试。",
+      "clear_all_title": "清除所有本地数据",
+      "clear_all_message": "这将从本设备删除缓存内容、已保存的新闻、自选列表、缓存图片、草稿和诊断数据。您仍将保持登录状态。",
+      "clear_all_hint": "您将保持登录状态，等待同步的更改也会保留。",
+      "clear_all_success": "已清除所有本地数据，您仍处于登录状态。",
+      "clear_all_partial_other": "已清除大部分数据，但有 {{count}} 个类别未能清除，请重试。",
+      "queued_preserved_warning_other": "仍有 {{count}} 项更改等待同步，将予以保留。",
+      "preference_save_failed": "无法保存该偏好设置，请重试。",
+      "preferences_survive_clear": "清除数据时会保留您的分析和崩溃报告选择 — 清除操作绝不会重新开启它们。",
+      "analytics": {
+        "title": "使用分析",
+        "description": "分享匿名使用数据以帮助改进应用。关闭后将停止在本设备上收集。"
+      },
+      "crash_reporting": {
+        "title": "崩溃报告",
+        "description": "自动报告崩溃和错误。发送报告前始终会移除钱包地址。"
+      },
+      "categories": {
+        "cached_content": {
+          "title": "缓存内容",
+          "description": "为离线使用而保存的新闻、投资组合快照、项目和资产价格。"
+        },
+        "saved_news": {
+          "title": "已保存的新闻",
+          "description": "您收藏以便稍后阅读的文章。"
+        },
+        "watchlists": {
+          "title": "自选列表",
+          "description": "本地缓存的自选列表及其上次同步时间。"
+        },
+        "image_cache": {
+          "title": "缓存图片",
+          "description": "存储在磁盘上的远程图片，避免重复下载。"
+        },
+        "drafts": {
+          "title": "草稿",
+          "description": "已保存的未完成贡献，可稍后继续。"
+        },
+        "diagnostics": {
+          "title": "诊断数据",
+          "description": "本设备上收集的本地分析和诊断状态。"
+        }
+      }
+    }
+  },
+  "errors": {
+    "something_went_wrong": "出错了，请重试。",
+    "network_error": "网络错误，请重试。",
+    "no_stellar_account": "未关联 Stellar 账户。请先在设置中关联一个。",
+    "transaction_failed": "交易失败，请重试。",
+    "project_not_found": "未找到项目。",
+    "round_not_found": "未找到轮次。",
+    "couldnt_load": "无法加载 {{item}}",
+    "could_not_remove": "无法移除",
+    "could_not_update": "无法更新"
+  },
+  "wallet": {
+    "connect": {
+      "title": "连接钱包",
+      "message": "在 {{network}} 连接 Stellar 钱包。这将打开您的钱包应用以授权连接。",
+      "continue_button": "打开钱包应用",
+      "error_title": "连接失败",
+      "error_message": "无法连接钱包。"
+    },
+    "reconnect": {
+      "title": "重新连接到 {{network}}",
+      "message": "在新的 {{network}} 网络上恢复已保存的钱包会话。请选择重新连接的方式。",
+      "button": "重新连接钱包",
+      "restoring": "正在恢复钱包会话\u2026"
+    },
+    "network_mismatch": {
+      "title": "网络已更改",
+      "message": "您保存的钱包属于其它网络。请重新连接 {{network}} 以继续。",
+      "last_network_label": "上次连接所在网络：{{network}}"
+    },
+    "restore_failed": {
+      "title": "钱包恢复失败",
+      "message": "我们无法安全地恢复保存的钱包。已清除过期的会话。",
+      "button": "重试"
+    },
+    "status": {
+      "disconnected": "未连接",
+      "connecting": "正在连接",
+      "reconnecting": "正在重新连接",
+      "connected": "已连接",
+      "network_mismatch": "需要重新连接",
+      "restore_failed": "恢复失败",
+      "rejected": "已拒绝"
+    },
+    "sign": {
+      "title": "签名交易",
+      "message": "一笔交易需要您的签名。这将打开您的钱包应用。",
+      "error_failed": "钱包报告签名失败。",
+      "error_unknown": "钱包返回了意外响应。",
+      "error_timeout": "钱包未在时间内响应，请重试。",
+      "error_concurrent": "已有签名请求正在进行中。"
+    },
+    "error": {
+      "not_available": "当前无法使用该钱包选项。",
+      "missing_wallet": "未找到 Stellar 钱包应用。请安装兼容的钱包后重试。",
+      "unsupported_device": "此设备无法打开钱包应用。",
+      "rejected": "钱包连接被拒绝。",
+      "unknown": "钱包出现未知问题，请重试。"
+    }
+  }
+}

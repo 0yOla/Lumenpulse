@@ -17,7 +17,9 @@ import {
   Bug,
   Lightbulb,
   CheckCircle2,
+  Activity,
 } from "lucide-react";
+import { ContributorActivityFeed } from "@/components/contributor-activity-feed";
 
 const CHANNELS = [
   {
@@ -221,6 +223,24 @@ export default function CommunityPage() {
         </div>
       </section>
 
+      {/* Contributor Activity Feed */}
+      <section className="py-16 px-4 border-t border-white/5">
+        <div className="container mx-auto max-w-3xl">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                Contributor Activity Feed
+              </h2>
+              <p className="text-foreground/50 text-sm">
+                Live activity from contributors across the platform.
+              </p>
+            </div>
+          </div>
+          <ContributorActivityFeed limit={10} paginated={true} />
+        </div>
+      </section>
+
       {/* Where to Contribute */}
       <section className="py-16 px-4 border-t border-white/5">
         <div className="container mx-auto max-w-5xl">
@@ -298,7 +318,7 @@ export default function CommunityPage() {
             >
               CONTRIBUTING.md
             </Link>
-            . Here's the short version.
+            . Here&apos;s the short version.
           </p>
           <div className="relative">
             {/* vertical line */}

@@ -8,6 +8,11 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { NewsProviderService } from './news-provider.service';
 import { NewsArticleDto } from './dto/news-article.dto';
 import { CacheService } from '../cache/cache.service';
+import { QueryProfilerService } from '../common/profiling/query-profiler.service';
+import { JobLockService } from '../scheduler/job-lock.service';
+import { JobHistoryService } from '../scheduler/job-history.service';
+
+const FETCH_JOB_NAME = 'news-fetch';
 
 interface RawOverallResult {
   average: string | null;
@@ -29,6 +34,9 @@ export class NewsService {
     private newsRepository: Repository<News>,
     private readonly newsProviderService: NewsProviderService,
     private readonly cacheService: CacheService,
+    private readonly profiler: QueryProfilerService,
+    private readonly jobLock: JobLockService,
+    private readonly jobHistory: JobHistoryService,
   ) {}
 
   async create(createArticleDto: CreateArticleDto): Promise<News> {
@@ -42,23 +50,28 @@ export class NewsService {
     tag?: string;
     category?: string;
   }): Promise<News[]> {
-    const qb = this.newsRepository
-      .createQueryBuilder('news')
-      .orderBy('news.publishedAt', 'DESC');
+    return this.profiler.profile(
+      async () => {
+        const qb = this.newsRepository
+          .createQueryBuilder('news')
+          .orderBy('news.publishedAt', 'DESC');
 
-    if (filters?.tag) {
-      qb.andWhere(':tag = ANY(news.tags)', {
-        tag: filters.tag.toLowerCase(),
-      });
-    }
+        if (filters?.tag) {
+          qb.andWhere(':tag = ANY(news.tags)', {
+            tag: filters.tag.toLowerCase(),
+          });
+        }
 
-    if (filters?.category) {
-      qb.andWhere('LOWER(news.category) = :category', {
-        category: filters.category.toLowerCase(),
-      });
-    }
+        if (filters?.category) {
+          qb.andWhere('LOWER(news.category) = :category', {
+            category: filters.category.toLowerCase(),
+          });
+        }
 
-    return qb.getMany();
+        return qb.getMany();
+      },
+      { label: 'NewsService.findAll', thresholdMs: 150 },
+    );
   }
 
   async findOne(id: string): Promise<News | null> {
@@ -114,34 +127,39 @@ export class NewsService {
     overall: { averageSentiment: number; totalArticles: number };
     bySource: { source: string; averageScore: number; articleCount: number }[];
   }> {
-    const overall = await this.newsRepository
-      .createQueryBuilder('news')
-      .select('AVG(news.sentimentScore)', 'average')
-      .addSelect('COUNT(news.id)', 'totalArticles')
-      .where('news.sentimentScore IS NOT NULL')
-      .getRawOne<RawOverallResult>();
+    return this.profiler.profile(
+      async () => {
+        const overall = await this.newsRepository
+          .createQueryBuilder('news')
+          .select('AVG(news.sentimentScore)', 'average')
+          .addSelect('COUNT(news.id)', 'totalArticles')
+          .where('news.sentimentScore IS NOT NULL')
+          .getRawOne<RawOverallResult>();
 
-    const bySource = await this.newsRepository
-      .createQueryBuilder('news')
-      .select('news.source', 'source')
-      .addSelect('AVG(news.sentimentScore)', 'averageScore')
-      .addSelect('COUNT(news.id)', 'articleCount')
-      .where('news.sentimentScore IS NOT NULL')
-      .groupBy('news.source')
-      .orderBy('averageScore', 'DESC')
-      .getRawMany<RawSourceResult>();
+        const bySource = await this.newsRepository
+          .createQueryBuilder('news')
+          .select('news.source', 'source')
+          .addSelect('AVG(news.sentimentScore)', 'averageScore')
+          .addSelect('COUNT(news.id)', 'articleCount')
+          .where('news.sentimentScore IS NOT NULL')
+          .groupBy('news.source')
+          .orderBy('averageScore', 'DESC')
+          .getRawMany<RawSourceResult>();
 
-    return {
-      overall: {
-        averageSentiment: parseFloat(overall?.average ?? '0') || 0,
-        totalArticles: parseInt(overall?.totalArticles ?? '0', 10),
+        return {
+          overall: {
+            averageSentiment: parseFloat(overall?.average ?? '0') || 0,
+            totalArticles: parseInt(overall?.totalArticles ?? '0', 10),
+          },
+          bySource: bySource.map((r) => ({
+            source: r.source,
+            averageScore: parseFloat(r.averageScore),
+            articleCount: parseInt(r.articleCount, 10),
+          })),
+        };
       },
-      bySource: bySource.map((r) => ({
-        source: r.source,
-        averageScore: parseFloat(r.averageScore),
-        articleCount: parseInt(r.articleCount, 10),
-      })),
-    };
+      { label: 'NewsService.getSentimentSummary', thresholdMs: 200 },
+    );
   }
 
   /**
@@ -181,6 +199,13 @@ export class NewsService {
   async fetchAndSaveArticles(): Promise<void> {
     this.logger.log('Running scheduled news fetch job...');
 
+    const acquired = await this.jobLock.tryAcquire(FETCH_JOB_NAME);
+    if (!acquired) {
+      await this.jobHistory.markSkipped(FETCH_JOB_NAME);
+      return;
+    }
+
+    const run = await this.jobHistory.start(FETCH_JOB_NAME);
     try {
       // Fetch latest articles from provider
       const response = await this.newsProviderService.getLatestArticles({
@@ -202,6 +227,12 @@ export class NewsService {
         }
       }
 
+      await this.jobHistory.complete(run, {
+        fetched: articles.length,
+        newArticles: newCount,
+        duplicatesSkipped: skippedCount,
+      });
+
       this.logger.log(
         `News fetch completed. Fetched ${articles.length} articles, ${newCount} new, ${skippedCount} duplicates skipped.`,
       );
@@ -210,9 +241,12 @@ export class NewsService {
         await this.cacheService.invalidateNewsCache();
       }
     } catch (error) {
+      await this.jobHistory.fail(run, error);
       this.logger.error(
         `Failed to fetch and save articles: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
+    } finally {
+      await this.jobLock.release(FETCH_JOB_NAME);
     }
   }
 }

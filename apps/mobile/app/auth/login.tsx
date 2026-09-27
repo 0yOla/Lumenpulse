@@ -12,37 +12,44 @@ import {
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useLocalization } from '../../src/context';
+import { sanitizeRedirectPath } from '../../lib/deep-links';
 
 const LoginScreen = () => {
-  const { colors, resolvedMode } = useTheme();
+  const { colors, resolvedMode } = useLocalization();
+  const { t } = useLocalization();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
+  // Deep-link continuation (issue #1410): when a notification tap lands here
+  // because the target requires auth, `?redirect=` carries the original
+  // destination; we continue to it after a successful login.
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const continueTo = sanitizeRedirectPath(redirect) ?? '/';
 
   const validateInputs = () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
+      Alert.alert(t('errors.error'), t('auth.login.errors.email_required'));
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert(t('errors.error'), t('auth.login.errors.email_invalid'));
       return false;
     }
 
     if (!password) {
-      Alert.alert('Error', 'Please enter your password');
+      Alert.alert(t('errors.error'), t('auth.login.errors.password_required'));
       return false;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
+      Alert.alert(t('errors.error'), t('auth.login.errors.password_min_length'));
       return false;
     }
 
@@ -57,13 +64,12 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       await login(email, password);
-      // Navigate back to home after successful login
-      router.replace('/'); // Go back to the main tab navigator
+      router.replace(continueTo as any);
     } catch (error: any) {
       console.error('Login error:', error);
       Alert.alert(
-        'Login Failed',
-        error.message || 'An error occurred during login. Please try again.',
+        t('auth.login.errors.login_failed'),
+        error.message || t('errors.something_went_wrong'),
       );
     } finally {
       setLoading(false);
@@ -74,16 +80,27 @@ const LoginScreen = () => {
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      importantForAccessibility="yes"
     >
       <StatusBar barStyle={resolvedMode === 'dark' ? 'light-content' : 'dark-content'} />
       <ScrollView contentContainerStyle={styles.scrollContainer} bounces={false}>
         <View style={styles.content}>
-          <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
-          <Text style={[styles.subtitle, { color: colors.accent }]}>Sign in to your account</Text>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            accessible
+            accessibilityRole="header"
+          >
+            {t('auth.login.title')}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.accent }]} accessible>
+            {t('auth.login.subtitle')}
+          </Text>
 
-          <View style={styles.form}>
+          <View style={styles.form} importantForAccessibility="yes">
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+              <Text style={[styles.label, { color: colors.text }]} accessible>
+                {t('auth.login.email_label')}
+              </Text>
               <TextInput
                 style={[
                   styles.input,
@@ -95,17 +112,24 @@ const LoginScreen = () => {
                 ]}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Enter your email"
+                testID="login-email-input"
+                placeholder={t('auth.login.email_placeholder')}
                 placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
                 textContentType="emailAddress"
+                importantForAccessibility="yes"
+                accessibilityLabel={t('auth.login.email_label')}
+                accessibilityHint={t('auth.login.email_placeholder')}
+                accessibilityRole="text"
               />
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.text }]}>Password</Text>
+              <Text style={[styles.label, { color: colors.text }]} accessible>
+                {t('auth.login.password_label')}
+              </Text>
               <TextInput
                 style={[
                   styles.input,
@@ -117,11 +141,16 @@ const LoginScreen = () => {
                 ]}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter your password"
+                testID="login-password-input"
+                placeholder={t('auth.login.password_placeholder')}
                 placeholderTextColor={colors.textSecondary}
                 secureTextEntry
                 autoCapitalize="none"
                 textContentType="password"
+                importantForAccessibility="yes"
+                accessibilityLabel={t('auth.login.password_label')}
+                accessibilityHint={t('auth.login.password_placeholder')}
+                accessibilityRole="text"
               />
             </View>
 
@@ -133,32 +162,49 @@ const LoginScreen = () => {
               ]}
               onPress={handleLogin}
               disabled={loading}
+              testID="login-submit-button"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: loading }}
+              accessibilityLabel={t('auth.login.sign_in_button')}
+              accessibilityHint={t('auth.login.sign_in_button')}
             >
               {loading ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator
+                  color="#ffffff"
+                  accessible
+                  accessibilityLabel={t('common.loading')}
+                />
               ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={styles.buttonText} accessible>
+                  {t('auth.login.sign_in_button')}
+                </Text>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.linkButton}
               onPress={() => router.push('/auth/register')}
+              accessibilityRole="link"
+              accessibilityLabel={t('auth.login.sign_up_link')}
             >
-              <Text style={[styles.linkText, { color: colors.textSecondary }]}>
-                Don&apos;t have an account?{' '}
-                <Text style={[styles.linkHighlight, { color: colors.accent }]}>Sign Up</Text>
+              <Text style={[styles.linkText, { color: colors.textSecondary }]} accessible>
+                {t('auth.login.sign_up_link')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.linkButton, { marginTop: 20 }]}
               onPress={() => router.replace('/(tabs)')}
+              accessibilityRole="button"
+              accessibilityLabel={t('auth.login.bypass_login')}
             >
-              <Text style={[styles.linkText, { color: colors.textSecondary, fontSize: 14 }]}>
+              <Text
+                style={[styles.linkText, { color: colors.textSecondary, fontSize: 14 }]}
+                accessible
+              >
                 (Debug){' '}
                 <Text style={{ color: colors.accent, fontWeight: 'bold' }}>
-                  Bypass Login to Dashboard
+                  {t('auth.login.bypass_login')}
                 </Text>
               </Text>
             </TouchableOpacity>

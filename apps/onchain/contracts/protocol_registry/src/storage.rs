@@ -1,0 +1,35 @@
+use soroban_sdk::{contracttype, Address, Symbol};
+
+/// If an entry's remaining TTL drops below this many ledgers, the next
+/// touch extends it back out to `LEDGER_BUMP`. ~100_000 ledgers (~5.8 days
+/// at 5s/ledger).
+pub const LEDGER_THRESHOLD: u32 = 100_000;
+/// TTL applied when extending. ~518_400 ledgers (~30 days at 5s/ledger).
+pub const LEDGER_BUMP: u32 = 518_400;
+
+/// A single protocol module registration entry.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModuleEntry {
+    /// Canonical module name (e.g. `symbol_short!("vault")`).
+    pub name: Symbol,
+    /// Currently active deployed address for this module.
+    pub address: Address,
+    /// Monotonically-increasing version counter; callers can detect upgrades.
+    pub version: u32,
+    /// Ledger timestamp when this version was registered.
+    pub registered_at: u64,
+    /// False once the module is decommissioned. `resolve` will refuse inactive modules.
+    pub is_active: bool,
+}
+
+#[contracttype]
+#[derive(Clone)]
+pub enum DataKey {
+    /// `Address` — the privileged admin.
+    Admin,
+    /// `bool`  — emergency pause flag.
+    Paused,
+    /// `ModuleEntry` keyed by module name Symbol.
+    Module(Symbol),
+}

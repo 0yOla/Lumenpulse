@@ -4,6 +4,9 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -25,6 +28,8 @@ import {
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
+import * as QRCode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 
 interface ChallengeData {
   nonce: string;
@@ -34,12 +39,13 @@ interface ChallengeData {
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleDestroy {
   private readonly logger = new Logger(AuthService.name);
   private readonly challengeStore = new Map<string, ChallengeData>();
   private readonly CHALLENGE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
   private readonly serverKeypair: Keypair;
   private readonly stellarNetwork: string;
+  private cleanupInterval?: NodeJS.Timeout;
 
   private static readonly RESET_TOKEN_BYTES = 32;
   private static readonly RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -54,6 +60,7 @@ export class AuthService {
     private readonly resetTokenRepository: Repository<PasswordResetToken>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
     private jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -75,15 +82,26 @@ export class AuthService {
     );
 
     // Start cleanup interval
-    setInterval(() => this.cleanupExpiredChallenges(), 60000);
+    this.cleanupInterval = setInterval(
+      () => this.cleanupExpiredChallenges(),
+      60000,
+    );
+    this.cleanupInterval.unref?.();
 
     this.logger.log('AuthService initialized');
+  }
+
+  onModuleDestroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = undefined;
+    }
   }
 
   async validateUser(
     email: string,
     pass: string,
-  ): Promise<Omit<User, 'passwordHash'> | null> {
+  ): Promise<Omit<User, 'passwordHash' | 'twoFactorSecret'> | null> {
     const user = await this.usersService.findByEmail(email);
 
     if (
@@ -92,7 +110,7 @@ export class AuthService {
       (await bcrypt.compare(pass, user.passwordHash))
     ) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { passwordHash, ...result } = user;
+      const { passwordHash, twoFactorSecret, ...result } = user;
       return result;
     }
     return null;
@@ -189,6 +207,64 @@ export class AuthService {
       nonce,
       expiresIn: 300, // seconds
     };
+  }
+
+  /**
+   * Verify the signed challenge without creating a user session or issuing JWT.
+   * Used for secure account linking.
+   */
+  async verifyChallengeOnly(
+    publicKey: string,
+    signedChallenge: string,
+  ): Promise<boolean> {
+    await Promise.resolve();
+    const storedChallenge = this.challengeStore.get(publicKey);
+
+    if (!storedChallenge) {
+      throw new BadRequestException(
+        'No challenge found for this public key. Please request a new challenge.',
+      );
+    }
+
+    if (Date.now() > storedChallenge.expiresAt) {
+      this.challengeStore.delete(publicKey);
+      throw new BadRequestException(
+        'Challenge has expired. Please request a new challenge.',
+      );
+    }
+
+    const networkPassphrase =
+      this.stellarNetwork === 'testnet' ? Networks.TESTNET : Networks.PUBLIC;
+
+    let transaction: Transaction;
+
+    try {
+      transaction = new Transaction(signedChallenge, networkPassphrase);
+    } catch {
+      this.challengeStore.delete(publicKey);
+      throw new BadRequestException('Invalid transaction format');
+    }
+
+    // Verify the transaction was signed by the user
+    const userSignature = transaction.signatures.find((sig) => {
+      try {
+        const keypair = Keypair.fromPublicKey(publicKey);
+        return keypair.verify(transaction.hash(), sig.signature());
+      } catch {
+        return false;
+      }
+    });
+
+    if (!userSignature) {
+      this.challengeStore.delete(publicKey);
+      throw new BadRequestException(
+        'Invalid signature. Transaction was not signed by the provided public key.',
+      );
+    }
+
+    // Remove used challenge
+    this.challengeStore.delete(publicKey);
+    return true;
   }
 
   /**
@@ -627,5 +703,153 @@ export class AuthService {
     this.logger.log(`Session ${sessionId} revoked for user ${userId}`);
 
     return { message: 'Session revoked successfully', sessionId };
+  }
+
+  /**
+   * Generate TOTP secret and QR code for 2FA setup
+   */
+  async generateTwoFactorSecret(
+    userId: string,
+  ): Promise<{ secret: string; qrCode: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException('2FA is already enabled for this user');
+    }
+
+    // Generate the otpauth URL for QR code
+    const appName = this.configService.get<string>('APP_NAME', 'Lumenpulse');
+
+    // Generate a secret key
+    const secret = speakeasy.generateSecret({
+      name: `${appName} (${user.email})`,
+      issuer: appName,
+    });
+
+    // Generate QR code as data URL
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url || '');
+
+    // Store the secret temporarily (not enabled yet)
+    user.twoFactorSecret = secret.base32;
+    await this.userRepository.save(user);
+
+    this.logger.log(`2FA secret generated for user ${userId}`);
+
+    return { secret: secret.base32 || '', qrCode };
+  }
+
+  /**
+   * Enable 2FA by verifying the TOTP token
+   */
+  async enableTwoFactor(
+    userId: string,
+    token: string,
+  ): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.twoFactorSecret) {
+      throw new BadRequestException(
+        'No 2FA secret found. Please generate a secret first.',
+      );
+    }
+
+    if (user.twoFactorEnabled) {
+      throw new BadRequestException('2FA is already enabled');
+    }
+
+    // Verify the token
+    const isValid = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token,
+      window: 1,
+    });
+
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid TOTP token');
+    }
+
+    // Enable 2FA
+    user.twoFactorEnabled = true;
+    await this.userRepository.save(user);
+
+    this.logger.log(`2FA enabled for user ${userId}`);
+
+    return { message: '2FA enabled successfully' };
+  }
+
+  /**
+   * Verify TOTP token during login
+   */
+  async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.twoFactorEnabled || !user.twoFactorSecret) {
+      throw new BadRequestException('2FA is not enabled for this user');
+    }
+
+    const isValid = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token,
+      window: 1,
+    });
+
+    if (!isValid) {
+      this.logger.warn(`Invalid 2FA token attempt for user ${userId}`);
+    }
+
+    return isValid;
+  }
+
+  /**
+   * Disable 2FA
+   */
+  async disableTwoFactor(
+    userId: string,
+    token: string,
+  ): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.twoFactorEnabled) {
+      throw new BadRequestException('2FA is not enabled for this user');
+    }
+
+    // Verify the token before disabling
+    const isValid = speakeasy.totp.verify({
+      secret: user.twoFactorSecret || '',
+      encoding: 'base32',
+      token,
+      window: 1,
+    });
+
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid TOTP token');
+    }
+
+    // Disable 2FA
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = null;
+    await this.userRepository.save(user);
+
+    this.logger.log(`2FA disabled for user ${userId}`);
+
+    return { message: '2FA disabled successfully' };
   }
 }

@@ -85,7 +85,7 @@ impl CommunityCurationContract {
         let token_client = token::Client::new(&env, &get_deposit_token(&env));
         token_client.transfer(
             &proposer,
-            &env.current_contract_address(),
+            env.current_contract_address(),
             &PROPOSAL_DEPOSIT_STROOPS,
         );
 
@@ -350,3 +350,6 @@ fn validate_metadata(m: &ProjectMetadata) -> Result<(), CurationError> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod test;

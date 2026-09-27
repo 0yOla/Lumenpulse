@@ -1,11 +1,4 @@
-"""
-Analytics module for market analysis and trend detection.
-"""
-
-from .market_analyzer import MarketAnalyzer, Trend, MarketData, get_explanation
-from .forecaster import SentimentForecaster, ForecastResult
-from .correlation_engine import CorrelationEngine, CorrelationResult, DataPoint
-from .ner_service import NERService
+"""Analytics module for market analysis and trend detection."""
 
 __all__ = [
     "MarketAnalyzer",
@@ -18,4 +11,73 @@ __all__ = [
     "CorrelationResult",
     "DataPoint",
     "NERService",
+    "EmbeddingService",
+    # Attribution scorer
+    "AttributionScorer",
+    "AttributionTarget",
+    "AttributionResult",
+    "SignalBreakdown",
 ]
+
+
+def __getattr__(name: str):
+    """Lazy-load analytics exports so lightweight NLP imports stay cheap."""
+    if name in {"MarketAnalyzer", "Trend", "MarketData", "get_explanation"}:
+        from .market_analyzer import MarketAnalyzer, MarketData, Trend, get_explanation
+
+        values = {
+            "MarketAnalyzer": MarketAnalyzer,
+            "Trend": Trend,
+            "MarketData": MarketData,
+            "get_explanation": get_explanation,
+        }
+        return values[name]
+
+    if name in {"SentimentForecaster", "ForecastResult"}:
+        from .forecaster import ForecastResult, SentimentForecaster
+
+        return {
+            "SentimentForecaster": SentimentForecaster,
+            "ForecastResult": ForecastResult,
+        }[name]
+
+    if name in {"CorrelationEngine", "CorrelationResult", "DataPoint"}:
+        from .correlation_engine import CorrelationEngine, CorrelationResult, DataPoint
+
+        return {
+            "CorrelationEngine": CorrelationEngine,
+            "CorrelationResult": CorrelationResult,
+            "DataPoint": DataPoint,
+        }[name]
+
+    if name == "NERService":
+        from .ner_service import NERService
+
+        return NERService
+
+    if name == "EmbeddingService":
+        from .embedding_service import EmbeddingService
+
+        return EmbeddingService
+
+    if name in {
+        "AttributionScorer",
+        "AttributionTarget",
+        "AttributionResult",
+        "SignalBreakdown",
+    }:
+        from .attribution_scorer import (
+            AttributionResult,
+            AttributionScorer,
+            AttributionTarget,
+            SignalBreakdown,
+        )
+
+        return {
+            "AttributionScorer": AttributionScorer,
+            "AttributionTarget": AttributionTarget,
+            "AttributionResult": AttributionResult,
+            "SignalBreakdown": SignalBreakdown,
+        }[name]
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
