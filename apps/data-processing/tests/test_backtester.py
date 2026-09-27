@@ -2,14 +2,11 @@
 """Tests for the walk-forward backtesting harness (Issue #1244)."""
 
 import math
-from pathlib import Path
 from typing import Dict
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
-import yaml
 
 from src.analytics.backtester import (
     BacktestConfig,
