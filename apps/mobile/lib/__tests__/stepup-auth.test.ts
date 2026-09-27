@@ -2,6 +2,8 @@ import { Platform } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { requireStepUpAuthentication } from '../biometric-lock';
 
+let originalPlatformOS: string;
+
 jest.mock('react-native', () => ({
   Platform: { OS: 'ios' },
 }));
@@ -12,23 +14,28 @@ jest.mock('expo-local-authentication', () => ({
 
 describe('biometric-lock step-up mechanism', () => {
   beforeEach(() => {
+    jest.resetModules();
     jest.clearAllMocks();
     jest.useFakeTimers();
+    originalPlatformOS = Platform.OS;
+    Platform.OS = 'ios';
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    Platform.OS = originalPlatformOS;
   });
 
   it('bypasses authentication on web platform', async () => {
     Platform.OS = 'web';
+    const { requireStepUpAuthentication } = require('../biometric-lock');
     const result = await requireStepUpAuthentication('Test', 300000);
     expect(result).toBe(true);
     expect(LocalAuthentication.authenticateAsync).not.toHaveBeenCalled();
   });
 
   it('prompts for authentication if outside grace period', async () => {
-    Platform.OS = 'ios';
+    const { requireStepUpAuthentication } = require('../biometric-lock');
     (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValueOnce({ success: true });
     const result = await requireStepUpAuthentication('Test', 300000);
     expect(result).toBe(true);
@@ -43,7 +50,7 @@ describe('biometric-lock step-up mechanism', () => {
   });
 
   it('respects the configurable grace period for subsequent calls', async () => {
-    Platform.OS = 'ios';
+    const { requireStepUpAuthentication } = require('../biometric-lock');
     (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValueOnce({ success: true });
 
     // First call authenticates
@@ -68,12 +75,10 @@ describe('biometric-lock step-up mechanism', () => {
   });
 
   it('returns false if authentication is cancelled or fails', async () => {
-    Platform.OS = 'ios';
+    const { requireStepUpAuthentication } = require('../biometric-lock');
     (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValueOnce({ success: false, error: 'user_cancel' });
 
-    // Reset the module state (timer) by advancing past any previous successful auth
-    jest.advanceTimersByTime(1000000);
-
+    // Attempt authentication (no previous successful auth due to resetModules)
     const result = await requireStepUpAuthentication('Test', 300000);
     expect(result).toBe(false);
   });
