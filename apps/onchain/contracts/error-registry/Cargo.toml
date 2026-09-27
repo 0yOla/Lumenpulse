@@ -5,7 +5,7 @@ edition = "2021"
 description = "Standardized error code registry for LumenPulse contracts"
 
 [dependencies]
-soroban-sdk = { version = "21.0.0", features = ["contracterror"] }
+soroban-sdk = { workspace = true }
 
 [lib]
 name = "error_registry"
