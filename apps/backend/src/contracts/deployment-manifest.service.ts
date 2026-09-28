@@ -22,7 +22,10 @@ import { ContractCapabilityService } from './contract-capability.service';
 @Injectable()
 export class DeploymentManifestService implements OnModuleInit {
   private readonly logger = new Logger(DeploymentManifestService.name);
-  private lastKnownHashes: Record<string, string> = {};
+  private lastKnownContracts: Record<
+    string,
+    { id: string; wasmHash: string | null }
+  > = {};
 
   constructor(
     @Optional()
@@ -335,9 +338,20 @@ export class DeploymentManifestService implements OnModuleInit {
 
     try {
       const content = readFileSync(manifestPath, 'utf8');
-      const parsed = JSON.parse(content);
-      
-      const contracts = parsed.contracts || {};
+      const parsed = JSON.parse(content) as {
+        contracts?: Record<string, { id?: unknown; wasm_hash?: unknown; reason?: unknown }>;
+      };
+
+      if (
+        !parsed ||
+        typeof parsed.contracts !== 'object' ||
+        parsed.contracts === null ||
+        Array.isArray(parsed.contracts)
+      ) {
+        throw new Error('Manifest must contain a contracts object');
+      }
+
+      const contracts = parsed.contracts;
       let hasChanges = false;
       const updates: Record<string, string | null> = {};
 
@@ -346,18 +360,23 @@ export class DeploymentManifestService implements OnModuleInit {
         const camelKey = snakeKey.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
         
         // Skip un-deployed contracts (they have a 'reason' instead of 'id')
-        if ((contractInfo as any).reason) {
+        if (contractInfo.reason) {
           continue;
         }
 
-        const id = (contractInfo as any).id;
-        const wasmHash = (contractInfo as any).wasm_hash;
+        const id = typeof contractInfo.id === 'string' ? contractInfo.id : null;
+        const wasmHash =
+          typeof contractInfo.wasm_hash === 'string'
+            ? contractInfo.wasm_hash
+            : null;
 
-        if (id && wasmHash) {
-          const prevHash = this.lastKnownHashes[camelKey];
-          if (prevHash !== wasmHash) {
-            this.logger.log(\`Contract \${camelKey} changed: previous hash \${prevHash || 'none'}, new hash \${wasmHash}\`);
-            this.lastKnownHashes[camelKey] = wasmHash;
+        if (id) {
+          const previous = this.lastKnownContracts[camelKey];
+          if (!previous || previous.id !== id || previous.wasmHash !== wasmHash) {
+            this.logger.log(
+              `Contract ${camelKey} changed: previous=${JSON.stringify(previous ?? null)}, new=${JSON.stringify({ id, wasmHash })}`,
+            );
+            this.lastKnownContracts[camelKey] = { id, wasmHash };
             updates[camelKey] = id;
             hasChanges = true;
           }
