@@ -120,9 +120,7 @@
     },
     "/api/review-queue": {
       "get": {
-        "tags": [
-          "Review Queue"
-        ],
+        "tags": ["Review Queue"],
         "summary": "Get Review Queue",
         "description": "Retrieve items from the review queue with optional filters.",
         "operationId": "get_review_queue_api_review_queue_get",
@@ -188,9 +186,7 @@
     },
     "/api/review-queue/{review_id}": {
       "post": {
-        "tags": [
-          "Review Queue"
-        ],
+        "tags": ["Review Queue"],
         "summary": "Update Item Status",
         "description": "Update status of a queue item (approve, reject, correct).",
         "operationId": "update_item_status_api_review_queue__review_id__post",
@@ -241,9 +237,7 @@
     },
     "/api/review-queue/export": {
       "get": {
-        "tags": [
-          "Review Queue"
-        ],
+        "tags": ["Review Queue"],
         "summary": "Export Review Queue",
         "description": "Export the review queue as a structured response.",
         "operationId": "export_review_queue_api_review_queue_export_get",
@@ -297,9 +291,7 @@
     },
     "/api/review-queue/outcomes": {
       "get": {
-        "tags": [
-          "Review Queue"
-        ],
+        "tags": ["Review Queue"],
         "summary": "Get Reviewed Outcomes",
         "description": "Retrieve all reviewed outcomes (approved/corrected/rejected) for feedback tuning.",
         "operationId": "get_reviewed_outcomes_api_review_queue_outcomes_get",
@@ -324,9 +316,7 @@
     },
     "/ingestion/cursors": {
       "get": {
-        "tags": [
-          "Ledger Cursors"
-        ],
+        "tags": ["Ledger Cursors"],
         "summary": "List all ledger cursor rows",
         "description": "Return the full inventory of persistent ledger cursors.\n\nEach row represents one ingestion stream.  Use this endpoint to verify\nthat all expected streams are active and no stream is stuck in\n``\"failed\"`` or ``\"ingesting\"`` status longer than expected.",
         "operationId": "list_cursors_ingestion_cursors_get",
@@ -346,9 +336,7 @@
     },
     "/ingestion/cursors/{stream_id}": {
       "get": {
-        "tags": [
-          "Ledger Cursors"
-        ],
+        "tags": ["Ledger Cursors"],
         "summary": "Get a single ledger cursor",
         "description": "Return the cursor for a specific *stream_id*.\n\n``stream_id`` may contain slashes (e.g. ``contract/CXXX...YYY``); the\n``:path`` converter captures the full value.",
         "operationId": "get_cursor_ingestion_cursors__stream_id__get",
@@ -389,9 +377,7 @@
     },
     "/ingestion/cursors/{stream_id}/resume": {
       "post": {
-        "tags": [
-          "Ledger Cursors"
-        ],
+        "tags": ["Ledger Cursors"],
         "summary": "Reset a failed cursor to idle",
         "description": "Reset a ``\"failed\"`` cursor back to ``\"idle\"`` so the ingestion loop\nwill retry from the last safe ledger.\n\nThis endpoint is idempotent: calling it on a cursor that is already\n``\"idle\"`` is a no-op.\n\nThe response includes the ledger number ingestion will resume from so\nmaintainers can cross-check against Stellar explorer.",
         "operationId": "resume_cursor_ingestion_cursors__stream_id__resume_post",
@@ -432,9 +418,7 @@
     },
     "/api/kpi/latest": {
       "get": {
-        "tags": [
-          "kpi"
-        ],
+        "tags": ["kpi"],
         "summary": "Get Latest Kpis",
         "description": "Get the latest KPI snapshot.\n\nReturns:\n    Latest KPI values or 404 if no data available.",
         "operationId": "get_latest_kpis_api_kpi_latest_get",
@@ -454,9 +438,7 @@
     },
     "/api/kpi/series": {
       "get": {
-        "tags": [
-          "kpi"
-        ],
+        "tags": ["kpi"],
         "summary": "Get Kpi Series",
         "description": "Get KPI time series data.\n\nArgs:\n    start_date: Start date (inclusive)\n    end_date: End date (inclusive)\n    period: Time period granularity\n\nReturns:\n    List of KPI snapshots over time.",
         "operationId": "get_kpi_series_api_kpi_series_get",
@@ -540,9 +522,7 @@
     },
     "/api/kpi/recompute": {
       "post": {
-        "tags": [
-          "kpi"
-        ],
+        "tags": ["kpi"],
         "summary": "Trigger Kpi Recompute",
         "description": "Trigger KPI recomputation from events.\n\nAdmin-only endpoint for rebuilding KPI data when ingestion logic changes.",
         "operationId": "trigger_kpi_recompute_api_kpi_recompute_post",
@@ -620,9 +600,7 @@
     },
     "/api/kpi/recompute-async": {
       "post": {
-        "tags": [
-          "kpi"
-        ],
+        "tags": ["kpi"],
         "summary": "Trigger Kpi Recompute Async",
         "description": "Trigger async KPI recomputation.\n\nAdmin-only endpoint for background recomputation.",
         "operationId": "trigger_kpi_recompute_async_api_kpi_recompute_async_post",
@@ -700,9 +678,7 @@
     },
     "/api/account-operations/ingest": {
       "post": {
-        "tags": [
-          "account-operations"
-        ],
+        "tags": ["account-operations"],
         "summary": "Trigger Ingestion",
         "description": "Trigger ingestion of account operations.\n\nAdmin-only endpoint for backfill and incremental ingestion.\n\nArgs:\n    request: Ingestion parameters\n    \nReturns:\n    Ingestion statistics",
         "operationId": "trigger_ingestion_api_account_operations_ingest_post",
@@ -760,9 +736,7 @@
     },
     "/api/account-operations/status": {
       "get": {
-        "tags": [
-          "account-operations"
-        ],
+        "tags": ["account-operations"],
         "summary": "Get Status",
         "description": "Get ingestion status for an account.\n\nArgs:\n    account_id: Optional account ID\n    \nReturns:\n    Cursor status",
         "operationId": "get_status_api_account_operations_status_get",
@@ -828,9 +802,7 @@
     },
     "/api/account-operations/reset-cursor": {
       "post": {
-        "tags": [
-          "account-operations"
-        ],
+        "tags": ["account-operations"],
         "summary": "Reset Cursor",
         "description": "Reset the ingestion cursor for an account.\n\nWarning: This will cause re-ingestion of operations.\n\nArgs:\n    request: Reset parameters\n    \nReturns:\n    Success status",
         "operationId": "reset_cursor_api_account_operations_reset_cursor_post",
@@ -890,9 +862,7 @@
     },
     "/api/account-operations/operations": {
       "get": {
-        "tags": [
-          "account-operations"
-        ],
+        "tags": ["account-operations"],
         "summary": "Get Operations",
         "description": "Get account operations from the database.\n\nArgs:\n    account_id: Account ID\n    limit: Maximum number of operations\n    from_ledger: Starting ledger\n    to_ledger: Ending ledger\n    \nReturns:\n    List of operations",
         "operationId": "get_operations_api_account_operations_operations_get",
@@ -1005,9 +975,7 @@
     },
     "/api/rebuild/kpi-snapshots": {
       "post": {
-        "tags": [
-          "rebuild"
-        ],
+        "tags": ["rebuild"],
         "summary": "Rebuild Kpi Snapshots",
         "description": "Rebuild KPI snapshots from raw events.\n\nAdmin-only endpoint for rebuilding KPI data when ingestion logic changes.",
         "operationId": "rebuild_kpi_snapshots_api_rebuild_kpi_snapshots_post",
@@ -1065,9 +1033,7 @@
     },
     "/api/rebuild/all": {
       "post": {
-        "tags": [
-          "rebuild"
-        ],
+        "tags": ["rebuild"],
         "summary": "Rebuild All",
         "description": "Rebuild all derived datasets.\n\nAdmin-only endpoint for full rebuild of all datasets.",
         "operationId": "rebuild_all_api_rebuild_all_post",
@@ -1125,9 +1091,7 @@
     },
     "/api/rebuild/project-views": {
       "post": {
-        "tags": [
-          "rebuild"
-        ],
+        "tags": ["rebuild"],
         "summary": "Rebuild Project Views",
         "operationId": "rebuild_project_views_api_rebuild_project_views_post",
         "parameters": [
@@ -1184,9 +1148,7 @@
     },
     "/api/rebuild/contract-events": {
       "post": {
-        "tags": [
-          "rebuild"
-        ],
+        "tags": ["rebuild"],
         "summary": "Rebuild Contract Events",
         "operationId": "rebuild_contract_events_api_rebuild_contract_events_post",
         "parameters": [
@@ -1243,9 +1205,7 @@
     },
     "/api/rebuild/metrics": {
       "post": {
-        "tags": [
-          "rebuild"
-        ],
+        "tags": ["rebuild"],
         "summary": "Rebuild Metrics",
         "operationId": "rebuild_metrics_api_rebuild_metrics_post",
         "parameters": [
@@ -1302,9 +1262,7 @@
     },
     "/api/sentiment-labels": {
       "post": {
-        "tags": [
-          "Sentiment Labels"
-        ],
+        "tags": ["Sentiment Labels"],
         "summary": "Submit Sentiment Label",
         "description": "Submit a label or correct the existing label for identical text.",
         "operationId": "submit_sentiment_label_api_sentiment_labels_post",
@@ -1342,9 +1300,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Sentiment Labels"
-        ],
+        "tags": ["Sentiment Labels"],
         "summary": "List Sentiment Labels",
         "operationId": "list_sentiment_labels_api_sentiment_labels_get",
         "parameters": [
@@ -1405,9 +1361,7 @@
     },
     "/api/sentiment-labels/{label_id}": {
       "put": {
-        "tags": [
-          "Sentiment Labels"
-        ],
+        "tags": ["Sentiment Labels"],
         "summary": "Correct Sentiment Label",
         "description": "Correct a label by updating the canonical text record.",
         "operationId": "correct_sentiment_label_api_sentiment_labels__label_id__put",
@@ -2607,10 +2561,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
+        "required": ["success", "message"],
         "title": "ActionResponse"
       },
       "AllShadowStatusResponse": {
@@ -2622,9 +2573,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "shadows"
-        ],
+        "required": ["shadows"],
         "title": "AllShadowStatusResponse"
       },
       "AnalyzeRequest": {
@@ -2646,9 +2595,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "text"
-        ],
+        "required": ["text"],
         "title": "AnalyzeRequest"
       },
       "AnalyzeResponse": {
@@ -2682,9 +2629,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "sentiment"
-        ],
+        "required": ["sentiment"],
         "title": "AnalyzeResponse"
       },
       "AssetAnalysisResponse": {
@@ -2733,12 +2678,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "asset",
-          "sentiment",
-          "sentiment_label",
-          "analysis_count"
-        ],
+        "required": ["asset", "sentiment", "sentiment_label", "analysis_count"],
         "title": "AssetAnalysisResponse"
       },
       "ComparisonLogResponse": {
@@ -2765,12 +2705,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "model_type",
-          "window_hours",
-          "entries",
-          "total"
-        ],
+        "required": ["model_type", "window_hours", "entries", "total"],
         "title": "ComparisonLogResponse"
       },
       "ComparisonReportResponse": {
@@ -2832,9 +2767,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "checked_at"
-        ],
+        "required": ["checked_at"],
         "title": "ContractLagResponse"
       },
       "ContractLagSnapshotResponse": {
@@ -3043,12 +2976,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "event_id",
-          "contract_id",
-          "ledger",
-          "category"
-        ],
+        "required": ["event_id", "contract_id", "ledger", "category"],
         "title": "ContributorActivityEventResponse"
       },
       "ContributorActivityTimelineResponse": {
@@ -3078,9 +3006,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "contributor"
-        ],
+        "required": ["contributor"],
         "title": "ContributorActivityTimelineResponse"
       },
       "CorrelationDataPoint": {
@@ -3095,10 +3021,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "timestamp",
-          "score"
-        ],
+        "required": ["timestamp", "score"],
         "title": "CorrelationDataPoint"
       },
       "CorrelationRequest": {
@@ -3145,9 +3068,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "sentiment_data"
-        ],
+        "required": ["sentiment_data"],
         "title": "CorrelationRequest"
       },
       "CorrelationResponse": {
@@ -3183,9 +3104,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "summary"
-        ],
+        "required": ["summary"],
         "title": "CorrelationResponse"
       },
       "CursorListResponse": {
@@ -3203,10 +3122,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "count",
-          "cursors"
-        ],
+        "required": ["count", "cursors"],
         "title": "CursorListResponse"
       },
       "CursorResponse": {
@@ -3560,11 +3476,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status",
-          "timestamp",
-          "service"
-        ],
+        "required": ["status", "timestamp", "service"],
         "title": "HealthResponse"
       },
       "IngestionAlertingStatusResponse": {
@@ -4025,10 +3937,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "sentiment_data",
-          "metric_data"
-        ],
+        "required": ["sentiment_data", "metric_data"],
         "title": "LagAnalysisRequest"
       },
       "LagAnalysisResponse": {
@@ -4075,10 +3984,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "timestamp",
-          "value"
-        ],
+        "required": ["timestamp", "value"],
         "title": "MetricDataPoint"
       },
       "ModelStatusResponse": {
@@ -4095,10 +4001,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "last_run",
-          "registry"
-        ],
+        "required": ["last_run", "registry"],
         "title": "ModelStatusResponse"
       },
       "NewsArticleResponse": {
@@ -4252,10 +4155,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "article_id",
-          "title"
-        ],
+        "required": ["article_id", "title"],
         "title": "NewsArticleResponse"
       },
       "OperationResponse": {
@@ -4354,12 +4254,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "operation_id",
-          "tx_id",
-          "operation_type",
-          "ledger"
-        ],
+        "required": ["operation_id", "tx_id", "operation_type", "ledger"],
         "title": "OperationResponse",
         "description": "Response model for account operation."
       },
@@ -4402,9 +4297,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "dataset"
-        ],
+        "required": ["dataset"],
         "title": "RebuildRequest",
         "description": "Request model for triggering a rebuild."
       },
@@ -4448,9 +4341,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "RebuildResponse",
         "description": "Response model for rebuild results."
       },
@@ -4493,10 +4384,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "success",
-          "message"
-        ],
+        "required": ["success", "message"],
         "title": "RecomputeResponse",
         "description": "Response model for recompute trigger."
       },
@@ -4541,11 +4429,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "stream_id",
-          "resumed_from_ledger",
-          "message"
-        ],
+        "required": ["stream_id", "resumed_from_ledger", "message"],
         "title": "ResumeResponse"
       },
       "RetrainRequest": {
@@ -4623,9 +4507,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "RetrainResponse"
       },
       "ReviewQueueItemResponse": {
@@ -4731,12 +4613,15 @@
               }
             ],
             "title": "Target Version"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": "Operator-requested rollback"
           }
         },
         "type": "object",
-        "required": [
-          "model_type"
-        ],
+        "required": ["model_type"],
         "title": "RollbackRequest"
       },
       "RollbackResponse": {
@@ -4770,12 +4655,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status",
-          "model_type",
-          "new_version",
-          "message"
-        ],
+        "required": ["status", "model_type", "new_version", "message"],
         "title": "RollbackResponse"
       },
       "SentimentIndicatorResponse": {
@@ -4802,13 +4682,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "score",
-          "color",
-          "hex_color",
-          "label",
-          "display_text"
-        ],
+        "required": ["score", "color", "hex_color", "label", "display_text"],
         "title": "SentimentIndicatorResponse",
         "description": "Visual indicator fields attached to every sentiment-bearing response."
       },
@@ -4847,11 +4721,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "text",
-          "label",
-          "labeller"
-        ],
+        "required": ["text", "label", "labeller"],
         "title": "SentimentLabelRequest"
       },
       "SentimentLabelResponse": {
@@ -4900,9 +4770,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "model_type"
-        ],
+        "required": ["model_type"],
         "title": "ShadowPromoteRequest"
       },
       "ShadowPromoteResponse": {
@@ -4925,12 +4793,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status",
-          "model_type",
-          "new_live_version",
-          "message"
-        ],
+        "required": ["status", "model_type", "new_live_version", "message"],
         "title": "ShadowPromoteResponse"
       },
       "ShadowRegisterRequest": {
@@ -4945,10 +4808,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "model_type",
-          "version"
-        ],
+        "required": ["model_type", "version"],
         "title": "ShadowRegisterRequest"
       },
       "ShadowRegisterResponse": {
@@ -4982,12 +4842,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status",
-          "model_type",
-          "shadow_version",
-          "message"
-        ],
+        "required": ["status", "model_type", "shadow_version", "message"],
         "title": "ShadowRegisterResponse"
       },
       "ShadowUnregisterResponse": {
@@ -5006,11 +4861,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status",
-          "model_type",
-          "message"
-        ],
+        "required": ["status", "model_type", "message"],
         "title": "ShadowUnregisterResponse"
       },
       "UpdateReviewStatusRequest": {
@@ -5034,9 +4885,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "UpdateReviewStatusRequest"
       },
       "ValidationError": {
@@ -5072,11 +4921,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       }
     }
