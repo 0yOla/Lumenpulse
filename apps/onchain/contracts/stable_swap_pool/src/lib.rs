@@ -1,13 +1,11 @@
 #![no_std]
 
-mod errors;
 mod events;
 mod storage;
 
-use errors::StableSwapError;
 use reentrancy_guard::{acquire as acquire_reentrancy, release as release_reentrancy};
 use soroban_sdk::token::TokenClient;
-use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
+use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Vec};
 use storage::{DataKey, LEDGER_BUMP, LEDGER_THRESHOLD};
 
 const AMPLIFICATION_FACTOR: i128 = 100; // A parameter for stable swap bonding curve
@@ -24,11 +22,11 @@ pub struct StableSwapPoolContract;
 /// - AMM-based pricing
 #[contractimpl]
 impl StableSwapPoolContract {
-    fn with_reentrancy_guard<T, F>(env: &Env, f: F) -> Result<T, StableSwapError>
+    fn with_reentrancy_guard<T, F>(env: &Env, f: F) -> Result<T, Symbol>
     where
-        F: FnOnce() -> Result<T, StableSwapError>,
+        F: FnOnce() -> Result<T, Symbol>,
     {
-        acquire_reentrancy(env).map_err(|_| StableSwapError::Reentrancy)?;
+        acquire_reentrancy(env).map_err(|_| Symbol::new(env, "reentrancy"))?;
         let result = f();
         release_reentrancy(env);
         result
@@ -68,9 +66,9 @@ impl StableSwapPoolContract {
         admin: Address,
         token_a: Address,
         token_b: Address,
-    ) -> Result<(), StableSwapError> {
+    ) -> Result<(), Symbol> {
         if env.storage().instance().has(&DataKey::Admin) {
-            return Err(StableSwapError::AlreadyInitialized);
+            return Err(Symbol::new(&env, "already_initialized"));
         }
 
         env.storage().instance().set(&DataKey::Admin, &admin);
@@ -95,10 +93,10 @@ impl StableSwapPoolContract {
         amount_a: i128,
         amount_b: i128,
         min_lp: i128,
-    ) -> Result<i128, StableSwapError> {
+    ) -> Result<i128, Symbol> {
         Self::with_reentrancy_guard(&env, || {
             if amount_a <= 0 || amount_b <= 0 {
-                return Err(StableSwapError::InvalidAmount);
+                return Err(Symbol::new(&env, "invalid_amount"));
             }
 
             Self::bump_instance(&env);
@@ -107,13 +105,13 @@ impl StableSwapPoolContract {
                 .storage()
                 .instance()
                 .get(&DataKey::TokenA)
-                .ok_or(StableSwapError::NotInitialized)?;
+                .ok_or_else(|| Symbol::new(&env, "not_initialized"))?;
 
             let token_b_addr: Address = env
                 .storage()
                 .instance()
                 .get(&DataKey::TokenB)
-                .ok_or(StableSwapError::NotInitialized)?;
+                .ok_or_else(|| Symbol::new(&env, "not_initialized"))?;
 
             // Transfer tokens from caller
             let token_a = TokenClient::new(&env, &token_a_addr);
@@ -156,7 +154,7 @@ impl StableSwapPoolContract {
             };
 
             if lp_tokens < min_lp {
-                return Err(StableSwapError::SlippageExceeded);
+                return Err(Symbol::new(&env, "slippage_exceeded"));
             }
 
             // Update reserves
@@ -206,9 +204,9 @@ impl StableSwapPoolContract {
         lp_amount: i128,
         min_a: i128,
         min_b: i128,
-    ) -> Result<(i128, i128), StableSwapError> {
+    ) -> Result<(i128, i128), Symbol> {
         if lp_amount <= 0 {
-            return Err(StableSwapError::InvalidAmount);
+            return Err(Symbol::new(&env, "invalid_amount"));
         }
 
         Self::bump_instance(&env);
@@ -222,7 +220,7 @@ impl StableSwapPoolContract {
             .unwrap_or(0);
 
         if user_lp < lp_amount {
-            return Err(StableSwapError::InsufficientBalance);
+            return Err(Symbol::new(&env, "insufficient_balance"));
         }
 
         let lp_supply: i128 = env
@@ -248,7 +246,7 @@ impl StableSwapPoolContract {
         let out_b = (lp_amount * reserve_b) / lp_supply;
 
         if out_a < min_a || out_b < min_b {
-            return Err(StableSwapError::SlippageExceeded);
+            return Err(Symbol::new(&env, "slippage_exceeded"));
         }
 
         // Update reserves
@@ -277,12 +275,12 @@ impl StableSwapPoolContract {
             .storage()
             .instance()
             .get(&DataKey::TokenA)
-            .ok_or(StableSwapError::NotInitialized)?;
+            .ok_or_else(|| Symbol::new(&env, "not_initialized"))?;
         let token_b_addr: Address = env
             .storage()
             .instance()
             .get(&DataKey::TokenB)
-            .ok_or(StableSwapError::NotInitialized)?;
+            .ok_or_else(|| Symbol::new(&env, "not_initialized"))?;
 
         let token_a = TokenClient::new(&env, &token_a_addr);
         let token_b = TokenClient::new(&env, &token_b_addr);
@@ -307,9 +305,9 @@ impl StableSwapPoolContract {
         input_token: Address,
         amount_in: i128,
         min_out: i128,
-    ) -> Result<i128, StableSwapError> {
+    ) -> Result<i128, Symbol> {
         if amount_in <= 0 {
-            return Err(StableSwapError::InvalidAmount);
+            return Err(Symbol::new(&env, "invalid_amount"));
         }
 
         Self::bump_instance(&env);
@@ -318,12 +316,12 @@ impl StableSwapPoolContract {
             .storage()
             .instance()
             .get(&DataKey::TokenA)
-            .ok_or(StableSwapError::NotInitialized)?;
+            .ok_or_else(|| Symbol::new(&env, "not_initialized"))?;
         let token_b_addr: Address = env
             .storage()
             .instance()
             .get(&DataKey::TokenB)
-            .ok_or(StableSwapError::NotInitialized)?;
+            .ok_or_else(|| Symbol::new(&env, "not_initialized"))?;
 
         let (reserve_in, reserve_out, output_token) = if input_token == token_a_addr {
             let ra: i128 = env
@@ -358,7 +356,7 @@ impl StableSwapPoolContract {
         let amount_out = (reserve_out * amount_after_fee) / (reserve_in + amount_after_fee);
 
         if amount_out < min_out {
-            return Err(StableSwapError::SlippageExceeded);
+            return Err(Symbol::new(&env, "slippage_exceeded"));
         }
 
         Self::with_reentrancy_guard(&env, || {

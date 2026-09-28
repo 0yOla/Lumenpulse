@@ -10,7 +10,6 @@ crate-type = ["cdylib"]
 soroban-sdk = { workspace = true }
 soroban-sdk-macros = { workspace = true }
 reentrancy-guard = { path = "../reentrancy-guard" }
-error-registry = { path = "../error-registry" }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }

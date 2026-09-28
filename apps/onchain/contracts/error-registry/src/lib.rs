@@ -43,28 +43,40 @@
 //!
 //! # Usage
 //!
-//! Each contract should define its errors using the `contract_error_code!` macro:
+//! The `contract_error_code!` macro is available for *naming* the allocation
+//! scheme and for use from build scripts and non-`#[contracterror]` contexts:
 //!
 //! ```rust
 //! use error_registry::{contract_error_code, ContractId};
 //!
-//! #[contracterror]
-//! #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-//! #[repr(u32)]
-//! pub enum MyContractError {
-//!     NotInitialized = contract_error_code!(ContractId::MyContract, 0),
-//!     AlreadyInitialized = contract_error_code!(ContractId::MyContract, 1),
-//!     Unauthorized = contract_error_code!(ContractId::MyContract, 2),
-//!     CustomError = contract_error_code!(ContractId::MyContract, 10),
-//! }
+//! assert_eq!(contract_error_code!(ContractId::Treasury, 0), 2000);
+//! assert_eq!(contract_error_code!(ContractId::VestingWallet, 5), 3005);
 //! ```
+//!
+//! ## Why contract enums spell out their discriminants
+//!
+//! `#[contracterror]` (soroban-sdk) only accepts **integer literals** as
+//! discriminants — it rejects macro calls, path expressions, and any other
+//! `syn::Expr` that is not a `Lit::Int`. A declaration like
+//! `NotInitialized = contract_error_code!(ContractId::Treasury, 0)` therefore
+//! fails to compile with:
+//!
+//! ```text
+//! error: unsupported discriminant value on enum variant
+//! ```
+//!
+//! So each contract writes its `#[contracterror]` discriminants as plain
+//! literals that *conform to* the ranges this crate defines. The registry is the
+//! single source of truth for *which* range belongs to *which* contract, and
+//! [`resolve_error_code`] is the single source of truth for turning a code
+//! emitted by any contract back into its contract name and meaning. The
+//! `test_no_overlapping_ranges` test below fails CI if two contracts are ever
+//! assigned the same range.
 //!
 //! # Backend Resolution
 //!
 //! The backend can resolve any error code to a human-readable message using
 //! the generated reference mapping provided by this crate.
-
-use soroban_sdk::contracterror;
 
 /// Contract identifiers for error code allocation.
 /// Each contract gets a unique index that determines its base error code range.

@@ -12,7 +12,6 @@ doctest = false
 soroban-sdk = { workspace = true }
 notification_interface = { path = "../notification_interface" }
 version-interface = { path = "../version-interface" }
-error-registry = { path = "../error-registry" }
 
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
