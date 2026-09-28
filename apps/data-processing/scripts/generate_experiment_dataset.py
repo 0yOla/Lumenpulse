@@ -100,6 +100,8 @@ def main() -> int:
             handle.write(text)
         print(f"wrote {OUTPUT_PATH} ({len(json.loads(text)['records'])} records)")
 
+    # Matches resolve_snapshot(), which hashes line-ending-normalised bytes so
+    # a CRLF checkout on Windows pins to the same sha256.
     print(f"sha256: {digest}")
     return 0
 

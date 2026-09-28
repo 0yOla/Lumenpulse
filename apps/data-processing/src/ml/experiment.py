@@ -181,7 +181,11 @@ def resolve_snapshot(config: ExperimentConfig) -> Tuple[List[Dict[str, Any]], Di
         )
 
     payload = path.read_bytes()
-    digest = hashlib.sha256(payload).hexdigest()
+    # Hash line-ending-normalised bytes: git checks the snapshot out as CRLF
+    # on Windows (core.autocrlf) and LF everywhere else, and neither should
+    # count as data drift.
+    normalized = payload.replace(b"\r\n", b"\n")
+    digest = hashlib.sha256(normalized).hexdigest()
     expected = str(config.data["sha256"]).lower()
     if digest != expected:
         raise SnapshotIntegrityError(
