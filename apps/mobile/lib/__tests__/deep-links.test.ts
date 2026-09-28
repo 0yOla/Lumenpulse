@@ -31,6 +31,7 @@ const NON_TAPPABLE_ROUTES = [
   '/news/:id',
   '/news/saved',
   '/portfolio',
+  '/search',
   '/settings',
   '/transaction-history',
   '/watchlist',
