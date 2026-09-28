@@ -260,7 +260,8 @@
     "recent_transactions": "Recent Transactions",
     "login_required": "Login required",
     "showing_cached": "Showing cached data - Pull to refresh",
-    "no_assets": "No assets"
+    "no_assets": "No assets",
+    "analytics_title": "Portfolio trend"
   },
   "transactions": {
     "title": "Transactions",
