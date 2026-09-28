@@ -978,7 +978,13 @@ def save_model_with_card(
     Returns:
         The version string that was saved.
     """
-    from model_card import ModelCard, TrainingDataInfo, HyperparametersInfo, EvaluationMetrics, FeatureSchema
+    from src.ml.model_card import (
+        ModelCard,
+        TrainingDataInfo,
+        HyperparametersInfo,
+        EvaluationMetrics,
+        FeatureSchema,
+    )
 
     # Parse card data
     training = TrainingDataInfo(**card_data.get("training_data", {}))
