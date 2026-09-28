@@ -57,8 +57,6 @@ export class CreateSavedSearches1860000000000 implements MigrationInterface {
       `DROP INDEX IF EXISTS "IDX_saved_searches_user_domain"`,
     );
     await queryRunner.query(`DROP TABLE IF EXISTS "saved_searches"`);
-    await queryRunner.query(
-      `DROP TYPE IF EXISTS "saved_search_domain_enum"`,
-    );
+    await queryRunner.query(`DROP TYPE IF EXISTS "saved_search_domain_enum"`);
   }
 }

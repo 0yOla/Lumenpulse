@@ -6,10 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  SavedSearch,
-  SavedSearchDomain,
-} from './entities/saved-search.entity';
+import { SavedSearch, SavedSearchDomain } from './entities/saved-search.entity';
 import { CreateSavedSearchDto } from './dto/create-saved-search.dto';
 import { UpdateSavedSearchDto } from './dto/update-saved-search.dto';
 import { ListSavedSearchesQueryDto } from './dto/saved-search-response.dto';
@@ -34,7 +31,10 @@ export class SavedSearchesService {
 
   // ── Create ─────────────────────────────────────────────────────────────────
 
-  async create(userId: string, dto: CreateSavedSearchDto): Promise<SavedSearch> {
+  async create(
+    userId: string,
+    dto: CreateSavedSearchDto,
+  ): Promise<SavedSearch> {
     const count = await this.repo.count({ where: { userId } });
 
     if (count >= MAX_SAVED_SEARCHES_PER_USER) {
@@ -201,7 +201,9 @@ export class SavedSearchesService {
     });
   }
 
-  private domainToNotificationType(domain: SavedSearchDomain): NotificationType {
+  private domainToNotificationType(
+    domain: SavedSearchDomain,
+  ): NotificationType {
     switch (domain) {
       case SavedSearchDomain.GRANTS:
         return NotificationType.PROJECT;

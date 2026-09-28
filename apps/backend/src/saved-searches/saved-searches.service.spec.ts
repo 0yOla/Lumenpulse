@@ -2,10 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { SavedSearchesService } from './saved-searches.service';
-import {
-  SavedSearch,
-  SavedSearchDomain,
-} from './entities/saved-search.entity';
+import { SavedSearch, SavedSearchDomain } from './entities/saved-search.entity';
 import { NotificationService } from '../notification/notification.service';
 import {
   NotificationType,
@@ -83,7 +80,9 @@ describe('SavedSearchesService', () => {
       const result = await service.create('user-uuid-1', dto);
 
       expect(result).toEqual(created);
-      expect(mockRepo.count).toHaveBeenCalledWith({ where: { userId: 'user-uuid-1' } });
+      expect(mockRepo.count).toHaveBeenCalledWith({
+        where: { userId: 'user-uuid-1' },
+      });
       expect(mockRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'user-uuid-1', isSubscribed: false }),
       );
@@ -230,9 +229,9 @@ describe('SavedSearchesService', () => {
     it('throws NotFoundException when the search does not exist', async () => {
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.remove('user-uuid-1', 'ghost'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('user-uuid-1', 'ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

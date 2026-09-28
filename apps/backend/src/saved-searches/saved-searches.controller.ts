@@ -99,7 +99,8 @@ export class SavedSearchesController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get a saved search by ID',
-    description: 'Returns a single saved search owned by the authenticated user.',
+    description:
+      'Returns a single saved search owned by the authenticated user.',
   })
   @ApiParam({ name: 'id', description: 'UUID of the saved search' })
   @ApiResponse({

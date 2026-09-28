@@ -10550,6 +10550,687 @@
         ]
       }
     },
+    "/message-templates": {
+      "get": {
+        "operationId": "MessageTemplateController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "List message templates (admin)",
+        "tags": [
+          "message-templates"
+        ]
+      }
+    },
+    "/message-templates/{key}/history": {
+      "get": {
+        "operationId": "MessageTemplateController_history",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageTemplateAuditLogResponseDto"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Get template change history (admin)",
+        "tags": [
+          "message-templates"
+        ]
+      }
+    },
+    "/message-templates/{key}/preview": {
+      "post": {
+        "operationId": "MessageTemplateController_preview",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Client-generated unique key (UUID recommended). Retrying with the same key and body replays the original response instead of repeating the write.",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewMessageTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderedMessageTemplateDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A request with the same Idempotency-Key is still in progress, or the resource is in a conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Idempotency-Key was reused with a different request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Preview a template with sample or custom variables (admin)",
+        "tags": [
+          "message-templates"
+        ]
+      }
+    },
+    "/message-templates/{key}": {
+      "put": {
+        "operationId": "MessageTemplateController_update",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Client-generated unique key (UUID recommended). Retrying with the same key and body replays the original response instead of repeating the write.",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMessageTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageTemplateResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A request with the same Idempotency-Key is still in progress, or the resource is in a conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Idempotency-Key was reused with a different request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Update a message template (admin)",
+        "tags": [
+          "message-templates"
+        ]
+      }
+    },
     "/health/schedulers": {
       "get": {
         "description": "Each registered scheduled job reports its last start, last success, last failure, and duration. Jobs that have not succeeded within their expected interval are marked stale and cause HTTP 503.",
@@ -13746,7 +14427,7 @@
         ],
         "summary": "Create a new matching round on-chain",
         "tags": [
-          "Admin \u2014 Matching Pool"
+          "Admin — Matching Pool"
         ]
       }
     },
@@ -13954,7 +14635,7 @@
         ],
         "summary": "Approve a project for a matching round",
         "tags": [
-          "Admin \u2014 Matching Pool"
+          "Admin — Matching Pool"
         ]
       }
     },
@@ -14717,7 +15398,7 @@
           {
             "name": "X-Webhook-Signature",
             "in": "header",
-            "description": "HMAC-SHA256 signature \u2014 format: sha256=<hex>",
+            "description": "HMAC-SHA256 signature — format: sha256=<hex>",
             "required": true,
             "schema": {
               "type": "string"
@@ -18115,7 +18796,7 @@
     },
     "/health/smoke": {
       "get": {
-        "description": "Single endpoint that confirms the backend and its testnet dependencies are ready to serve. Verifies required environment variables are present, core dependencies (database, Redis, Horizon) respond, and every configured Soroban contract ID is reachable. Returns a machine-readable report: `status` is \"pass\", \"warn\" or \"fail\", `ready` is false only when something failed, and every check carries a stable `id` so CI can assert on individual results. Safe to expose publicly \u2014 environment variables are reported by name and presence only, contract IDs are redacted, and dependency errors are replaced with fixed messages so no connection detail can leak.",
+        "description": "Single endpoint that confirms the backend and its testnet dependencies are ready to serve. Verifies required environment variables are present, core dependencies (database, Redis, Horizon) respond, and every configured Soroban contract ID is reachable. Returns a machine-readable report: `status` is \"pass\", \"warn\" or \"fail\", `ready` is false only when something failed, and every check carries a stable `id` so CI can assert on individual results. Safe to expose publicly — environment variables are reported by name and presence only, contract IDs are redacted, and dependency errors are replaced with fixed messages so no connection detail can leak.",
         "operationId": "HealthController_getDeploymentSmoke",
         "parameters": [],
         "responses": {
@@ -18167,7 +18848,7 @@
             }
           },
           "503": {
-            "description": "At least one check failed (status \"fail\") \u2014 the deployment is not ready.",
+            "description": "At least one check failed (status \"fail\") — the deployment is not ready.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23860,7 +24541,7 @@
             }
           },
           "403": {
-            "description": "Forbidden \u2013 admin only",
+            "description": "Forbidden – admin only",
             "content": {
               "application/json": {
                 "schema": {
@@ -26045,7 +26726,7 @@
         ]
       },
       "post": {
-        "description": "Creates a new feature flag or modifies the active state of an existing one. Requires admin role.",
+        "description": "Creates a new feature flag or modifies the active state of an existing one, including its rollout percentage and allow/deny lists. Omitting the targeting fields leaves any existing rollout untouched. Requires admin role.",
         "operationId": "FeatureFlagsController_upsert",
         "parameters": [
           {
@@ -26246,13 +26927,21 @@
     },
     "/feature-flags/check/{key}": {
       "get": {
-        "description": "Determine whether a specific feature key is active.",
+        "description": "Determine whether a specific feature key is active. Pass `principalId` to have percentage and list targeting applied for that principal; without it the flag's plain on/off state is returned.",
         "operationId": "FeatureFlagsController_check",
         "parameters": [
           {
             "name": "key",
             "required": true,
             "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principalId",
+            "required": true,
+            "in": "query",
             "schema": {
               "type": "string"
             }
@@ -26475,6 +27164,167 @@
           }
         },
         "summary": "Get flag change history (admin)",
+        "tags": [
+          "feature-flags"
+        ]
+      }
+    },
+    "/feature-flags/{key}/evaluate": {
+      "get": {
+        "description": "Resolve a feature flag for a specific principal and report the result, the rule that produced it, and the principal's stable hash bucket. Requires admin role.",
+        "operationId": "FeatureFlagsController_evaluate",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principalId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flag evaluated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagEvaluationResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (admin only)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Evaluate a flag for one principal (admin only)",
         "tags": [
           "feature-flags"
         ]
@@ -30866,7 +31716,7 @@
     },
     "/contributor-registry/register-with-sig": {
       "post": {
-        "description": "The contributor signs a SorobanAuthorizationEntry off-chain (no XLM required). The server (relayer) builds the transaction, attaches the signed entry, and submits it \u2014 paying the network fees. Obtain the current nonce first via GET /contributor-registry/nonce/:address.",
+        "description": "The contributor signs a SorobanAuthorizationEntry off-chain (no XLM required). The server (relayer) builds the transaction, attaches the signed entry, and submits it — paying the network fees. Obtain the current nonce first via GET /contributor-registry/nonce/:address.",
         "operationId": "ContributorRegistryController_registerWithSig",
         "parameters": [
           {
@@ -31391,7 +32241,7 @@
     },
     "/contributor-registry/nonce/{address}": {
       "get": {
-        "description": "Returns the current per-address nonce required when building the SorobanAuthorizationEntry for register_contributor_with_sig. Cached for 5 seconds only \u2014 always fetch immediately before signing.",
+        "description": "Returns the current per-address nonce required when building the SorobanAuthorizationEntry for register_contributor_with_sig. Cached for 5 seconds only — always fetch immediately before signing.",
         "operationId": "ContributorRegistryController_getNonce",
         "parameters": [
           {
@@ -34429,7 +35279,7 @@
     },
     "/review-metrics/aging": {
       "get": {
-        "description": "Returns aging distribution and latency statistics for pending/in-review items across moderation reports and portfolio anomalies. Requires admin role.",
+        "description": "Returns aging distribution and latency statistics for pending/in-review items across moderation reports and portfolio anomalies. Requires reviewer or admin role.",
         "operationId": "ReviewMetricsController_getAgingMetrics",
         "parameters": [
           {
@@ -34540,7 +35390,7 @@
             }
           },
           "403": {
-            "description": "Forbidden \u2013 admin role required",
+            "description": "Forbidden – reviewer or admin role required",
             "content": {
               "application/json": {
                 "schema": {
@@ -34674,7 +35524,7 @@
     },
     "/demo-bootstrap/seed": {
       "post": {
-        "description": "Seeds demo-friendly testnet scenarios for contributor review and MVP walkthroughs. Only available when STELLAR_NETWORK=testnet and BOOTSTRAP_DEMO_DATA_ENABLED=true. Safe to repeat \u2014 pass resetBeforeSeed=true (default) to clear previous state first.",
+        "description": "Seeds demo-friendly testnet scenarios for contributor review and MVP walkthroughs. Only available when STELLAR_NETWORK=testnet and BOOTSTRAP_DEMO_DATA_ENABLED=true. Safe to repeat — pass resetBeforeSeed=true (default) to clear previous state first.",
         "operationId": "DemoBootstrapController_seed",
         "parameters": [
           {
@@ -34736,7 +35586,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized \u2014 admin JWT required",
+            "description": "Unauthorized — admin JWT required",
             "content": {
               "application/json": {
                 "schema": {
@@ -34754,7 +35604,7 @@
             }
           },
           "403": {
-            "description": "Forbidden \u2014 admin role required",
+            "description": "Forbidden — admin role required",
             "content": {
               "application/json": {
                 "schema": {
@@ -34909,7 +35759,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized \u2014 admin JWT required",
+            "description": "Unauthorized — admin JWT required",
             "content": {
               "application/json": {
                 "schema": {
@@ -34927,7 +35777,7 @@
             }
           },
           "403": {
-            "description": "Forbidden \u2014 admin role required",
+            "description": "Forbidden — admin role required",
             "content": {
               "application/json": {
                 "schema": {
@@ -35048,7 +35898,7 @@
     },
     "/demo-bootstrap/runs": {
       "get": {
-        "description": "Returns bootstrap runs newest-first with the identifier to pass to the teardown endpoint. Covers both demo seeds and Friendbot-funded testnet accounts. Resource identifiers are not included \u2014 fetch a teardown dry run to see exactly what a given run created.",
+        "description": "Returns bootstrap runs newest-first with the identifier to pass to the teardown endpoint. Covers both demo seeds and Friendbot-funded testnet accounts. Resource identifiers are not included — fetch a teardown dry run to see exactly what a given run created.",
         "operationId": "DemoBootstrapController_listRuns",
         "parameters": [
           {
@@ -35128,7 +35978,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized \u2014 admin JWT required",
+            "description": "Unauthorized — admin JWT required",
             "content": {
               "application/json": {
                 "schema": {
@@ -35146,7 +35996,7 @@
             }
           },
           "403": {
-            "description": "Forbidden \u2014 admin role required",
+            "description": "Forbidden — admin role required",
             "content": {
               "application/json": {
                 "schema": {
@@ -35213,7 +36063,7 @@
     },
     "/demo-bootstrap/runs/{runId}/teardown": {
       "post": {
-        "description": "Removes the data created by a single bootstrap run, identified by its run id. Pass { \"dryRun\": true } to list what would be removed without changing anything. Refused with 403 unless the environment is explicitly marked as testnet (STELLAR_NETWORK=testnet) or development (NODE_ENV=development|test); never permitted in production. Safe to call repeatedly \u2014 a run that is already torn down reports so.",
+        "description": "Removes the data created by a single bootstrap run, identified by its run id. Pass { \"dryRun\": true } to list what would be removed without changing anything. Refused with 403 unless the environment is explicitly marked as testnet (STELLAR_NETWORK=testnet) or development (NODE_ENV=development|test); never permitted in production. Safe to call repeatedly — a run that is already torn down reports so.",
         "operationId": "DemoBootstrapController_teardownRun",
         "parameters": [
           {
@@ -35284,7 +36134,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized \u2014 admin JWT required",
+            "description": "Unauthorized — admin JWT required",
             "content": {
               "application/json": {
                 "schema": {
@@ -35302,7 +36152,7 @@
             }
           },
           "403": {
-            "description": "Forbidden \u2014 admin role required, or the environment is not marked as testnet or development",
+            "description": "Forbidden — admin role required, or the environment is not marked as testnet or development",
             "content": {
               "application/json": {
                 "schema": {
@@ -37966,19 +38816,141 @@
                   "$ref": "#/components/schemas/SavedSearchResponseDto"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "400": {
-            "description": "Validation error."
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized."
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "403": {
-            "description": "Saved search limit reached (max 100 per user)."
+            "description": "Saved search limit reached (max 100 per user).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
-          "404": {
-            "description": "Not found."
+          "409": {
+            "description": "A request with the same Idempotency-Key is still in progress, or the resource is in a conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Idempotency-Key was reused with a different request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -38001,13 +38973,13 @@
             "in": "query",
             "description": "Filter results to a single domain.",
             "schema": {
+              "example": "grants",
               "type": "string",
               "enum": [
                 "grants",
                 "projects",
                 "news"
-              ],
-              "example": "grants"
+              ]
             }
           }
         ],
@@ -38020,10 +38992,105 @@
                   "$ref": "#/components/schemas/SavedSearchListResponseDto"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "401": {
-            "description": "Unauthorized."
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -38061,13 +39128,123 @@
                   "$ref": "#/components/schemas/SavedSearchResponseDto"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "401": {
-            "description": "Unauthorized."
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Saved search not found."
+            "description": "Saved search not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -38123,16 +39300,159 @@
                   "$ref": "#/components/schemas/SavedSearchResponseDto"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "400": {
-            "description": "Validation error."
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized."
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Saved search not found."
+            "description": "Saved search not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A request with the same Idempotency-Key is still in progress, or the resource is in a conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Idempotency-Key was reused with a different request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -38171,13 +39491,159 @@
         ],
         "responses": {
           "204": {
-            "description": "Saved search deleted."
+            "description": "Saved search deleted.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized."
+            "description": "Unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but not permitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Saved search not found."
+            "description": "Saved search not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A request with the same Idempotency-Key is still in progress, or the resource is in a conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Idempotency-Key was reused with a different request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -38188,6 +39654,393 @@
         "summary": "Delete a saved search",
         "tags": [
           "saved-searches"
+        ]
+      }
+    },
+    "/projects": {
+      "get": {
+        "operationId": "ProjectsController_listProjects",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by project status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "expired",
+                "completed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "owner",
+            "required": false,
+            "in": "query",
+            "description": "Filter by owner address",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1-indexed)",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort field",
+            "schema": {
+              "default": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved projects list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get paginated list of projects with on-chain status",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/projects/{projectId}": {
+      "get": {
+        "operationId": "ProjectsController_getProjectDetail",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "description": "Project ID",
+            "schema": {
+              "example": "project_123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved project details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDetailDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get detailed project information with on-chain state",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/projects/{projectId}/health": {
+      "get": {
+        "operationId": "ProjectsController_healthCheck",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "description": "Project ID",
+            "schema": {
+              "example": "project_123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health check status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "database": {
+                      "type": "boolean"
+                    },
+                    "cache": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "description": "Correlation id for this request",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Health check for project data availability",
+        "tags": [
+          "projects"
         ]
       }
     }
@@ -40037,6 +41890,180 @@
           "token"
         ]
       },
+      "MessageTemplateResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "subjectTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "titleTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "messageTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "bodyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "requiredVariables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sampleVariables": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "version",
+          "requiredVariables",
+          "sampleVariables",
+          "updatedAt"
+        ]
+      },
+      "MessageTemplateAuditLogResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "templateKey": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "create",
+              "update"
+            ]
+          },
+          "previousVersion": {
+            "type": "number"
+          },
+          "newVersion": {
+            "type": "number"
+          },
+          "previousSnapshot": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "newSnapshot": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "actor": {
+            "type": "string",
+            "nullable": true
+          },
+          "changedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "templateKey",
+          "action",
+          "previousVersion",
+          "newVersion",
+          "previousSnapshot",
+          "newSnapshot",
+          "changedAt"
+        ]
+      },
+      "PreviewMessageTemplateDto": {
+        "type": "object",
+        "properties": {
+          "variables": {
+            "type": "object",
+            "description": "Variable values for preview. When omitted, the template sampleVariables are used.",
+            "example": {
+              "symbol": "XLM",
+              "currentPrice": "0.16"
+            }
+          }
+        }
+      },
+      "RenderedMessageTemplateDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "templateKey": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "templateKey",
+          "version"
+        ]
+      },
+      "UpdateMessageTemplateDto": {
+        "type": "object",
+        "properties": {
+          "subjectTemplate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "titleTemplate": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "messageTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "bodyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "requiredVariables": {
+            "description": "Variables that must be supplied at render time",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sampleVariables": {
+            "type": "object",
+            "description": "Default sample data used by the preview endpoint"
+          }
+        }
+      },
       "AssetBalanceWithCurrencyDto": {
         "type": "object",
         "properties": {
@@ -41273,7 +43300,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Normalised severity score (0\u20131)",
+            "description": "Normalised severity score (0–1)",
             "example": 0.85
           },
           "current_value": {
@@ -42109,7 +44136,7 @@
           },
           "quorumProgress": {
             "type": "number",
-            "description": "Percentage of quorum reached (0\u2013100)",
+            "description": "Percentage of quorum reached (0–100)",
             "example": 80
           }
         },
@@ -43394,7 +45421,7 @@
           },
           "quorumProgress": {
             "type": "number",
-            "description": "Percentage of quorum reached (0\u2013100)",
+            "description": "Percentage of quorum reached (0–100)",
             "example": 0
           },
           "score": {
@@ -43595,6 +45622,34 @@
             "description": "Whether the feature is enabled",
             "example": true
           },
+          "rolloutPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage (0-100) of principals targeted when above 0; null for plain on/off.",
+            "example": 5
+          },
+          "allowList": {
+            "nullable": true,
+            "description": "Principal IDs always granted the flag.",
+            "example": [
+              "user-123"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "nullable": true,
+            "description": "Principal IDs always denied the flag.",
+            "example": [
+              "user-456"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "conditions": {
             "type": "object",
             "description": "Optional conditions",
@@ -43645,6 +45700,26 @@
             "description": "Flag's enabled state after this mutation (null for removals)",
             "example": true
           },
+          "previousTargeting": {
+            "type": "object",
+            "nullable": true,
+            "description": "Targeting (rollout percentage, allow/deny lists) before this mutation; null if the flag did not exist",
+            "example": {
+              "rolloutPercentage": null,
+              "allowList": [],
+              "denyList": []
+            }
+          },
+          "newTargeting": {
+            "type": "object",
+            "nullable": true,
+            "description": "Targeting (rollout percentage, allow/deny lists) after this mutation; null for removals",
+            "example": {
+              "rolloutPercentage": 5,
+              "allowList": [],
+              "denyList": []
+            }
+          },
           "actor": {
             "type": "string",
             "nullable": true,
@@ -43665,6 +45740,81 @@
           "changedAt"
         ]
       },
+      "FlagEvaluationReason": {
+        "type": "string",
+        "enum": [
+          "flag_not_found",
+          "deny_list",
+          "allow_list",
+          "percentage_included",
+          "percentage_excluded",
+          "default_state",
+          "no_principal"
+        ],
+        "description": "The rule that produced this result"
+      },
+      "FlagEvaluationResponseDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The feature-flag key that was evaluated",
+            "example": "new-onboarding-flow"
+          },
+          "principalId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The principal the flag was evaluated for",
+            "example": "user-123"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the flag is enabled for this principal",
+            "example": true
+          },
+          "reason": {
+            "description": "The rule that produced this result",
+            "example": "percentage_included",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlagEvaluationReason"
+              }
+            ]
+          },
+          "bucket": {
+            "type": "number",
+            "nullable": true,
+            "description": "The principal's stable hash bucket in [0, 10000); null when no bucket was needed.",
+            "example": 412
+          },
+          "rolloutPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Rollout percentage configured on the flag",
+            "example": 5
+          },
+          "allowList": {
+            "description": "Allow list configured on the flag",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "description": "Deny list configured on the flag",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "principalId",
+          "enabled",
+          "reason"
+        ]
+      },
       "UpsertFeatureFlagDto": {
         "type": "object",
         "properties": {
@@ -43675,8 +45825,39 @@
           },
           "enabled": {
             "type": "boolean",
-            "description": "Whether the feature is enabled",
+            "description": "Whether the feature is enabled. Ignored while `rolloutPercentage` is set, since the percentage alone then decides the result.",
             "example": true
+          },
+          "rolloutPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage (0-100) of principals to target, bucketed stably by principal ID so a user never flips between states. While set it fully replaces the plain on/off behaviour of `enabled`; 0 serves nobody and is therefore the kill switch. Send null to return to plain on/off.",
+            "example": 5,
+            "nullable": true
+          },
+          "allowList": {
+            "maxItems": 500,
+            "description": "Principal IDs always granted the flag, overriding `rolloutPercentage`.",
+            "example": [
+              "user-123",
+              "qa@lumenpulse.com"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "maxItems": 500,
+            "description": "Principal IDs always denied the flag. Overrides both `allowList` and `rolloutPercentage`, so it doubles as a per-user kill switch.",
+            "example": [
+              "user-456"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "conditions": {
             "type": "object",
@@ -43710,6 +45891,27 @@
           "enabled": {
             "type": "boolean"
           },
+          "rolloutPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of principals (0-100) the flag targets, or null for no rollout.\n\nWhen set, this value alone determines the evaluation result — `enabled` is\nnot consulted — so a rollout can serve a fraction of users and later be\nwidened. 0 is a real value meaning \"serve nobody\", which makes it the\nsingle-field kill switch. Null leaves the flag on plain on/off."
+          },
+          "allowList": {
+            "nullable": true,
+            "description": "Principal IDs always granted the flag, regardless of the rollout percentage.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "denyList": {
+            "nullable": true,
+            "description": "Principal IDs always denied the flag; takes precedence over `allowList`.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "conditions": {
             "type": "object",
             "nullable": true
@@ -43731,6 +45933,9 @@
           "id",
           "key",
           "enabled",
+          "rolloutPercentage",
+          "allowList",
+          "denyList",
           "conditions",
           "changedBy",
           "createdAt",
@@ -44915,7 +47120,7 @@
           "summary": {
             "type": "string",
             "description": "Human-readable summary of the operation",
-            "example": "Replayed 150 events for contract CA... in ledgers 1000\u20132000"
+            "example": "Replayed 150 events for contract CA... in ledgers 1000–2000"
           }
         },
         "required": [
@@ -45918,7 +48123,7 @@
         "properties": {
           "label": {
             "type": "string",
-            "description": "Human-readable label for the bucket (e.g. \"< 1 day\", \"1\u20133 days\")."
+            "description": "Human-readable label for the bucket (e.g. \"< 1 day\", \"1–3 days\")."
           },
           "minHours": {
             "type": "number",
@@ -46122,7 +48327,7 @@
         "properties": {
           "runId": {
             "type": "string",
-            "description": "Run identifier \u2014 pass this to the teardown endpoint"
+            "description": "Run identifier — pass this to the teardown endpoint"
           },
           "kind": {
             "type": "object",
@@ -46171,7 +48376,7 @@
           "dryRun": {
             "type": "boolean",
             "default": false,
-            "description": "When true, nothing is removed \u2014 the response lists exactly what a real teardown would delete. Defaults to false."
+            "description": "When true, nothing is removed — the response lists exactly what a real teardown would delete. Defaults to false."
           }
         }
       },
@@ -46252,7 +48457,7 @@
           },
           "skipped": {
             "type": "number",
-            "description": "Resources the backend cannot remove \u2014 see per-resource reason"
+            "description": "Resources the backend cannot remove — see per-resource reason"
           }
         },
         "required": [
@@ -46883,6 +49088,417 @@
           }
         }
       },
+      "CreateSavedSearchDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Human-readable name for this saved search",
+            "example": "Stellar DeFi grants – round 4"
+          },
+          "domain": {
+            "enum": [
+              "grants",
+              "projects",
+              "news"
+            ],
+            "type": "string",
+            "description": "Domain this search targets",
+            "example": "grants"
+          },
+          "filters": {
+            "type": "object",
+            "description": "Domain-specific filter parameters as a JSON object.  These mirror the query parameters accepted by the corresponding discovery endpoint (e.g. GET /grants/rounds, GET /search/projects, GET /news).",
+            "example": {
+              "status": "active",
+              "keyword": "DeFi"
+            },
+            "additionalProperties": true
+          },
+          "isSubscribed": {
+            "type": "boolean",
+            "description": "When true the user will receive notifications when new results match this search.",
+            "default": false
+          }
+        },
+        "required": [
+          "name",
+          "domain",
+          "filters"
+        ]
+      },
+      "SavedSearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "enum": [
+              "grants",
+              "projects",
+              "news"
+            ],
+            "type": "string"
+          },
+          "filters": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isSubscribed": {
+            "type": "boolean"
+          },
+          "lastNotifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "domain",
+          "filters",
+          "isSubscribed",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "SavedSearchListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedSearchResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of saved searches for the user"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "UpdateSavedSearchDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Human-readable name for this saved search",
+            "example": "Stellar DeFi grants – round 4"
+          },
+          "domain": {
+            "enum": [
+              "grants",
+              "projects",
+              "news"
+            ],
+            "type": "string",
+            "description": "Domain this search targets",
+            "example": "grants"
+          },
+          "filters": {
+            "type": "object",
+            "description": "Domain-specific filter parameters as a JSON object.  These mirror the query parameters accepted by the corresponding discovery endpoint (e.g. GET /grants/rounds, GET /search/projects, GET /news).",
+            "example": {
+              "status": "active",
+              "keyword": "DeFi"
+            },
+            "additionalProperties": true
+          },
+          "isSubscribed": {
+            "type": "boolean",
+            "description": "Toggle subscription on or off.",
+            "default": false,
+            "example": true
+          }
+        }
+      },
+      "ProjectMetadataDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Project name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Project description"
+          },
+          "bannerUrl": {
+            "type": "string",
+            "description": "Banner image URL"
+          },
+          "category": {
+            "type": "string",
+            "description": "Project category"
+          },
+          "tags": {
+            "description": "Project tags",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Project website URL"
+          },
+          "socialLinks": {
+            "type": "object",
+            "description": "Social media links"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "VaultStateDto": {
+        "type": "object",
+        "properties": {
+          "totalDeposited": {
+            "type": "string",
+            "description": "Total deposited amount in stroops"
+          },
+          "totalWithdrawn": {
+            "type": "string",
+            "description": "Total withdrawn amount in stroops"
+          },
+          "currentBalance": {
+            "type": "string",
+            "description": "Current vault balance in stroops"
+          },
+          "contributorCount": {
+            "type": "number",
+            "description": "Number of unique contributors"
+          },
+          "lastLedgerSeq": {
+            "type": "number",
+            "description": "Last ledger sequence synced"
+          }
+        },
+        "required": [
+          "totalDeposited",
+          "totalWithdrawn",
+          "currentBalance",
+          "contributorCount",
+          "lastLedgerSeq"
+        ]
+      },
+      "OnChainStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "active",
+              "expired",
+              "completed",
+              "cancelled"
+            ],
+            "type": "string",
+            "description": "Project status from chain"
+          },
+          "vault": {
+            "description": "Vault state information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VaultStateDto"
+              }
+            ]
+          },
+          "lastTxHash": {
+            "type": "string",
+            "description": "Last transaction hash"
+          },
+          "lastSyncedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last sync timestamp"
+          }
+        },
+        "required": [
+          "status",
+          "vault",
+          "lastTxHash",
+          "lastSyncedAt"
+        ]
+      },
+      "ProjectListItemDto": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "Project ID"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner address"
+          },
+          "metadata": {
+            "description": "Project metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectMetadataDto"
+              }
+            ]
+          },
+          "onChainStatus": {
+            "description": "On-chain status",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnChainStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "projectId",
+          "owner",
+          "metadata",
+          "onChainStatus",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ProjectListResponseDto": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "description": "Array of projects",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of projects"
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of pages"
+          }
+        },
+        "required": [
+          "projects",
+          "total",
+          "page",
+          "limit",
+          "totalPages"
+        ]
+      },
+      "ProjectDetailDto": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": "Project ID"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner address"
+          },
+          "metadata": {
+            "description": "Project metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectMetadataDto"
+              }
+            ]
+          },
+          "onChainStatus": {
+            "description": "On-chain status",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnChainStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update timestamp"
+          },
+          "metadataCid": {
+            "type": "string",
+            "description": "Full project metadata CID"
+          },
+          "contractAddress": {
+            "type": "string",
+            "description": "Contract address"
+          },
+          "tokenAddress": {
+            "type": "string",
+            "description": "Token address"
+          },
+          "targetAmount": {
+            "type": "string",
+            "description": "Target amount in stroops"
+          },
+          "milestones": {
+            "description": "Project milestones",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "projectId",
+          "owner",
+          "metadata",
+          "onChainStatus",
+          "createdAt",
+          "updatedAt",
+          "metadataCid"
+        ]
+      },
       "ErrorResponseDto": {
         "type": "object",
         "properties": {
@@ -46945,146 +49561,6 @@
         },
         "required": [
           "message"
-        ]
-      },
-      "SavedSearchDomain": {
-        "type": "string",
-        "enum": [
-          "grants",
-          "projects",
-          "news"
-        ]
-      },
-      "CreateSavedSearchDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Human-readable name for this saved search",
-            "example": "Stellar DeFi grants \u2013 round 4",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "domain": {
-            "description": "Domain this search targets",
-            "example": "grants",
-            "$ref": "#/components/schemas/SavedSearchDomain"
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Domain-specific filter parameters as a JSON object. These mirror the query parameters accepted by the corresponding discovery endpoint.",
-            "example": {
-              "status": "active",
-              "keyword": "DeFi"
-            }
-          },
-          "isSubscribed": {
-            "type": "boolean",
-            "description": "When true the user will receive notifications when new results match this search.",
-            "default": false
-          }
-        },
-        "required": [
-          "name",
-          "domain",
-          "filters"
-        ]
-      },
-      "UpdateSavedSearchDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "domain": {
-            "$ref": "#/components/schemas/SavedSearchDomain"
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "isSubscribed": {
-            "type": "boolean",
-            "description": "Toggle subscription on or off.",
-            "example": true
-          }
-        }
-      },
-      "SavedSearchResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique identifier for the saved search"
-          },
-          "userId": {
-            "type": "string",
-            "description": "ID of the owning user"
-          },
-          "name": {
-            "type": "string",
-            "description": "Human-readable label for this saved search"
-          },
-          "domain": {
-            "$ref": "#/components/schemas/SavedSearchDomain"
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Domain-specific filter parameters"
-          },
-          "isSubscribed": {
-            "type": "boolean",
-            "description": "Whether the user wants to receive notifications when new results match this search."
-          },
-          "lastNotifiedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Timestamp of the last notification dispatch for this search."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Creation timestamp"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Last update timestamp"
-          }
-        },
-        "required": [
-          "id",
-          "userId",
-          "name",
-          "domain",
-          "filters",
-          "isSubscribed",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "SavedSearchListResponseDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SavedSearchResponseDto"
-            },
-            "description": "List of saved searches"
-          },
-          "total": {
-            "type": "number",
-            "description": "Total number of saved searches for the user"
-          }
-        },
-        "required": [
-          "items",
-          "total"
         ]
       }
     }

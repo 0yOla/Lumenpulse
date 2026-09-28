@@ -10,10 +10,7 @@ import {
   ProjectStatus,
 } from '../projects/dto/projects.dto';
 import { News } from '../news/news.entity';
-import {
-  SavedSearch,
-  SavedSearchDomain,
-} from './entities/saved-search.entity';
+import { SavedSearch, SavedSearchDomain } from './entities/saved-search.entity';
 
 /**
  * Periodically re-executes every subscribed saved search and notifies users
