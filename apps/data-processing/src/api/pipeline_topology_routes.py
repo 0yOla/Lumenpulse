@@ -44,18 +44,7 @@ class PipelineTopologyResponse(BaseModel):
 
 @router.get("/topology", response_model=PipelineTopologyResponse)
 async def get_pipeline_topology() -> PipelineTopologyResponse:
-    """
-    Return the data-processing pipeline topology.
-
-    Each stage reports its schedule, the stages it logically depends on, and
-    its latest run (last run timestamp, duration and outcome). A stage that has
-    never run reports ``status = "never_run"`` with null run fields, which is
-    how a failed stage is distinguished from one that has not run yet.
-
-    The stage set and schedules are derived from the scheduler configuration
-    (``AnalyticsScheduler`` in ``src/scheduler.py``); run status is recorded by
-    the scheduler process and read here through the pipeline run registry.
-    """
+    """Return the pipeline topology: each scheduled stage, its schedule and dependencies, and its latest run (last run, duration, outcome)."""  # noqa: E501
     runs = get_default_registry().get_runs()
     stages = [StageStatus(**stage) for stage in build_topology(runs)]
     return PipelineTopologyResponse(generated_at=generated_at(), stages=stages)
