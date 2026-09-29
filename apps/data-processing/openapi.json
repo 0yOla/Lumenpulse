@@ -6,6 +6,7 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/pipeline/topology": {"get":{"tags":["Pipeline"],"summary":"Get Pipeline Topology","description":"Return the pipeline topology: each scheduled stage, its schedule and dependencies, and its latest run (last run, duration, outcome).","operationId":"get_pipeline_topology_api_pipeline_topology_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PipelineTopologyResponse"}}}}}}},
     "/ingestion/contract-lag": {
       "get": {
         "summary": "Get Contract Lag",
@@ -2781,6 +2782,8 @@
   },
   "components": {
     "schemas": {
+      "StageStatus": {"description":"One pipeline stage plus the outcome of its most recent run.","properties":{"id":{"type":"string","title":"Id"},"name":{"type":"string","title":"Name"},"schedule":{"type":"string","title":"Schedule"},"depends_on":{"items":{"type":"string"},"type":"array","title":"Depends On"},"status":{"type":"string","title":"Status"},"last_run":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Last Run"},"duration_seconds":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Duration Seconds"},"outcome":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Outcome"},"error":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Error"}},"type":"object","required":["id","name","schedule","depends_on","status"],"title":"StageStatus"},
+      "PipelineTopologyResponse": {"description":"The full pipeline topology response.","properties":{"generated_at":{"type":"string","title":"Generated At"},"stages":{"items":{"$ref":"#/components/schemas/StageStatus"},"type":"array","title":"Stages"}},"type":"object","required":["generated_at","stages"],"title":"PipelineTopologyResponse"},
       "ActionResponse": {
         "properties": {
           "success": {
