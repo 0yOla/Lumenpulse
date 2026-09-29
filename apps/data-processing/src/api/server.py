@@ -141,6 +141,7 @@ from src.api.kpi_routes import router as kpi_router
 from src.api.account_operation_routes import router as account_operation_router
 from src.api.lineage_routes import router as lineage_router
 from src.api.job_routes import router as job_router
+from src.api.pipeline_topology_routes import router as pipeline_topology_router
 
 app.include_router(ingestion_quality_router)
 app.include_router(review_queue_router)
@@ -151,6 +152,7 @@ app.include_router(rebuild_router)  # Rebuild routes for admin
 app.include_router(sentiment_label_router)
 app.include_router(lineage_router)  # Feature/KPI lineage graph (#1254)
 app.include_router(job_router)  # Async analytics job status (#1248)
+app.include_router(pipeline_topology_router)  # Pipeline topology (#1451)
 
 
 try:
