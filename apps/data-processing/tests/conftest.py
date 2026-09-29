@@ -222,6 +222,27 @@ for _mod in _HEAVY_MODULES:
         chk_impl.check_build = check_build
         sys.modules['sklearn.__check_build._check_build'] = chk_impl
 
+    # redis: provide Redis class so tests can mock it via patch.object,
+    # but raise on ping() so tests that require a live Redis server skip.
+    if _mod == 'redis':
+        class _StubRedisClient:
+            def __init__(self, *a, **k):
+                pass
+            def ping(self):
+                raise OSError("Redis not available in test environment")
+            def get(self, key):
+                return None
+            def setex(self, key, ttl, value):
+                return False
+            def delete(self, *keys):
+                return 0
+            def scan_iter(self, match=None):
+                return iter([])
+        m.Redis = _StubRedisClient
+        m.RedisError = Exception
+        m.ConnectionError = OSError
+        m.TimeoutError = OSError
+
     # langdetect: provide detect() helper
     if _mod == 'langdetect':
         def detect(s):

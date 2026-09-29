@@ -3760,6 +3760,11 @@
           "generated_at": {
             "type": "string",
             "title": "Generated At"
+          },
+          "confidence_indication": {
+            "type": "string",
+            "title": "Confidence Indication",
+            "default": "low"
           }
         },
         "type": "object",
