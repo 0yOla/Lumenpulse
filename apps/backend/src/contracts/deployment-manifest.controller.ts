@@ -17,6 +17,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
+  ApiOkResponse,
   ApiParam,
   ApiQuery,
   ApiSecurity,
@@ -141,9 +142,15 @@ export class DeploymentManifestController {
     description:
       'Forces a reload of the testnet-manifest.json file to update contract IDs and caches.',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Manifest refreshed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Manifest refresh triggered' },
+      },
+      required: ['message'],
+    },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Requires admin role' })
