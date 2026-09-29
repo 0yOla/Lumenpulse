@@ -6,6 +6,7 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/pipeline/topology": {"get":{"tags":["Pipeline"],"summary":"Get Pipeline Topology","description":"Return the pipeline topology: each scheduled stage, its schedule and dependencies, and its latest run (last run, duration, outcome).","operationId":"get_pipeline_topology_api_pipeline_topology_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PipelineTopologyResponse"}}}}}}},
     "/ingestion/contract-lag": {
       "get": {
         "summary": "Get Contract Lag",
@@ -1484,7 +1485,7 @@
           "Lineage"
         ],
         "summary": "Get the upstream/downstream lineage graph for a feature or KPI",
-        "description": "Return the full upstream and downstream lineage for ``feature_id``,\nread live from ``feature_lineage.yaml``.\n\n* **upstream** — every source, feature, and KPI (transitively) feeding\n  this node, terminating in raw ingestion files where the manifest\n  doesn't track a further manifest entry.\n* **downstream** — every feature, KPI, and consuming API endpoint\n  (transitively) fed by this node.\n\nEach node carries its source system, transformation (formula or\ndescription), and owning module/team so a KPI can be traced back to\n\"what produced this and who owns it\" without opening the YAML.",
+        "description": "Return the full upstream and downstream lineage for ``feature_id``,\nread live from ``feature_lineage.yaml``.\n\n* **upstream** \u2014 every source, feature, and KPI (transitively) feeding\n  this node, terminating in raw ingestion files where the manifest\n  doesn't track a further manifest entry.\n* **downstream** \u2014 every feature, KPI, and consuming API endpoint\n  (transitively) fed by this node.\n\nEach node carries its source system, transformation (formula or\ndescription), and owning module/team so a KPI can be traced back to\n\"what produced this and who owns it\" without opening the YAML.",
         "operationId": "get_feature_lineage_api_lineage__feature_id__get",
         "parameters": [
           {
@@ -2021,7 +2022,7 @@
     "/sentiment/legend": {
       "get": {
         "summary": "Get Sentiment Legend",
-        "description": "Return the colour legend that frontend clients use to render\nsentiment badge tooltips.\n\nNo authentication required — purely informational.\n\nReturns a list of objects with keys:\n- color       : semantic name (\"green\" | \"red\" | \"gray\")\n- hex_color   : CSS hex value\n- label       : human-readable label (\"Bullish\" | \"Bearish\" | \"Neutral\")\n- description : tooltip copy\n- score_range : score boundary description",
+        "description": "Return the colour legend that frontend clients use to render\nsentiment badge tooltips.\n\nNo authentication required \u2014 purely informational.\n\nReturns a list of objects with keys:\n- color       : semantic name (\"green\" | \"red\" | \"gray\")\n- hex_color   : CSS hex value\n- label       : human-readable label (\"Bullish\" | \"Bearish\" | \"Neutral\")\n- description : tooltip copy\n- score_range : score boundary description",
         "operationId": "get_sentiment_legend_sentiment_legend_get",
         "responses": {
           "200": {
@@ -2042,7 +2043,7 @@
     "/retrain": {
       "post": {
         "summary": "Trigger Retraining",
-        "description": "Submit a model retraining run to the async job queue and return\nimmediately with a job identifier. Poll GET /api/jobs/{job_id} for the\noutcome — retraining only ever runs one at a time, so a submission made\nwhile one is already in flight is collapsed onto that job.\n\nRequires X-API-Key header.",
+        "description": "Submit a model retraining run to the async job queue and return\nimmediately with a job identifier. Poll GET /api/jobs/{job_id} for the\noutcome \u2014 retraining only ever runs one at a time, so a submission made\nwhile one is already in flight is collapsed onto that job.\n\nRequires X-API-Key header.",
         "operationId": "trigger_retraining_retrain_post",
         "requestBody": {
           "content": {
@@ -2297,11 +2298,11 @@
               "type": "integer",
               "maximum": 720,
               "minimum": 1,
-              "description": "Time window in hours (1–720)",
+              "description": "Time window in hours (1\u2013720)",
               "default": 24,
               "title": "Window Hours"
             },
-            "description": "Time window in hours (1–720)"
+            "description": "Time window in hours (1\u2013720)"
           }
         ],
         "responses": {
@@ -2353,11 +2354,11 @@
               "type": "integer",
               "maximum": 720,
               "minimum": 1,
-              "description": "Time window in hours (1–720)",
+              "description": "Time window in hours (1\u2013720)",
               "default": 24,
               "title": "Window Hours"
             },
-            "description": "Time window in hours (1–720)"
+            "description": "Time window in hours (1\u2013720)"
           },
           {
             "name": "limit",
@@ -2777,32 +2778,12 @@
           }
         }
       }
-    },
-    "/api/pipeline/topology": {
-      "get": {
-        "tags": [
-          "Pipeline"
-        ],
-        "summary": "Get Pipeline Topology",
-        "description": "Return the pipeline topology: each scheduled stage, its schedule and dependencies, and its latest run (last run, duration, outcome).",
-        "operationId": "get_pipeline_topology_api_pipeline_topology_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PipelineTopologyResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
+      "StageStatus": {"description":"One pipeline stage plus the outcome of its most recent run.","properties":{"id":{"type":"string","title":"Id"},"name":{"type":"string","title":"Name"},"schedule":{"type":"string","title":"Schedule"},"depends_on":{"items":{"type":"string"},"type":"array","title":"Depends On"},"status":{"type":"string","title":"Status"},"last_run":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Last Run"},"duration_seconds":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Duration Seconds"},"outcome":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Outcome"},"error":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Error"}},"type":"object","required":["id","name","schedule","depends_on","status"],"title":"StageStatus"},
+      "PipelineTopologyResponse": {"description":"The full pipeline topology response.","properties":{"generated_at":{"type":"string","title":"Generated At"},"stages":{"items":{"$ref":"#/components/schemas/StageStatus"},"type":"array","title":"Stages"}},"type":"object","required":["generated_at","stages"],"title":"PipelineTopologyResponse"},
       "ActionResponse": {
         "properties": {
           "success": {
@@ -4316,7 +4297,7 @@
             },
             "type": "array",
             "title": "Source System",
-            "description": "Where this node's data originates — source table(s) or source file, or the raw reference itself for external sources."
+            "description": "Where this node's data originates \u2014 source table(s) or source file, or the raw reference itself for external sources."
           },
           "transformation": {
             "anyOf": [
@@ -4501,7 +4482,7 @@
             },
             "type": "array",
             "title": "Source System",
-            "description": "Where this node's data originates — source table(s) or source file, or the raw reference itself for external sources."
+            "description": "Where this node's data originates \u2014 source table(s) or source file, or the raw reference itself for external sources."
           },
           "transformation": {
             "anyOf": [
@@ -5307,7 +5288,7 @@
           "unattributed": {
             "type": "number",
             "title": "Unattributed",
-            "default": 0
+            "default": 0.0
           },
           "model": {
             "anyOf": [
@@ -5663,107 +5644,6 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "StageStatus": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "schedule": {
-            "type": "string",
-            "title": "Schedule"
-          },
-          "depends_on": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Depends On"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "last_run": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Run"
-          },
-          "duration_seconds": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Duration Seconds"
-          },
-          "outcome": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Outcome"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "schedule",
-          "depends_on",
-          "status"
-        ],
-        "title": "StageStatus"
-      },
-      "PipelineTopologyResponse": {
-        "properties": {
-          "generated_at": {
-            "type": "string",
-            "title": "Generated At"
-          },
-          "stages": {
-            "items": {
-              "$ref": "#/components/schemas/StageStatus"
-            },
-            "type": "array",
-            "title": "Stages"
-          }
-        },
-        "type": "object",
-        "required": [
-          "generated_at",
-          "stages"
-        ],
-        "title": "PipelineTopologyResponse"
       }
     }
   }
