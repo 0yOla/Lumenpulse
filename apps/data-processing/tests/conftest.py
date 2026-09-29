@@ -6,6 +6,13 @@ import os
 
 # Skip FinBERT download/load in default test runs (CI and local pytest).
 os.environ.setdefault("SENTIMENT_DISABLE_TRANSFORMER", "1")
+# Configure the app before any test module imports ``src.api.server``.  The
+# security middleware is initialized at import time, so setting this in an
+# individual test module is order-dependent when pytest collects the full
+# suite.
+os.environ.setdefault(
+    "API_KEYS", '[{"id":"test","value":"test-key-123","scopes":["default"]}]'
+)
 
 import pytest
 import sys
