@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { bearer, createApp, createUser, http } from './support/app';
-import { UserDataDeletionService } from '../src/data-retention/user-data-deletion.service';
+import { UserDataDeletionService } from '../../src/data-retention/user-data-deletion.service';
 import {
   USER_DATA_DELETION_ACTION,
   anonymisedSubjectId,
