@@ -26,6 +26,7 @@ import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
+import { MessageTemplateModule } from './message-template/message-template.module';
 
 import databaseConfig from './database/database.config';
 import stellarConfig from './stellar/config/stellar.config';
@@ -83,6 +84,7 @@ import { PriceAlertModule } from './price-alert/price-alert.module';
 import { ProfilingModule } from './common/profiling/profiling.module';
 import { QueryCountMiddleware } from './common/profiling/query-count.middleware';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SavedSearchesModule } from './saved-searches/saved-searches.module';
 
 @Module({
   imports: [
@@ -162,6 +164,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ModerationModule,
     SearchModule,
     FeatureFlagsModule,
+    MessageTemplateModule,
 
     // Crowdfund modules
     CrowdfundModule,
@@ -228,6 +231,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
 
     // Aggregated, cached dashboard read model
     DashboardModule,
+
+    // Saved searches & subscriptions
+    SavedSearchesModule,
   ],
   controllers: [AppController, TestController, TestExceptionController],
   providers: [

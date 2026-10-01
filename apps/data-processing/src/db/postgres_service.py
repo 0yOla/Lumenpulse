@@ -68,6 +68,7 @@ from src.analytics.onchain_entity_linker import (
     OnchainEntityLink,
     OnchainEntityLinker,
 )
+from src.privacy import scrub_record
 
 logger = logging.getLogger(__name__)
 
@@ -510,6 +511,9 @@ class PostgresService:
         Returns:
             Article object if successful, None otherwise
         """
+        # Scrub personal data before any feature computation (NER entities,
+        # embeddings) and before the row is persisted (#1452).
+        article_data = scrub_record(article_data)
         article_data = self._ensure_detected_entities(article_data)
 
         def _save():
@@ -632,6 +636,9 @@ class PostgresService:
         try:
             with self.get_session() as session:
                 for i, article_data in enumerate(articles_data):
+                    # Scrub personal data before any feature computation and
+                    # before the row is persisted (#1452).
+                    article_data = scrub_record(article_data)
                     article_data = self._ensure_detected_entities(article_data)
                     sentiment_result = (
                         sentiment_results[i]
@@ -1097,6 +1104,8 @@ class PostgresService:
         Returns:
             SocialPost object if successful, None otherwise
         """
+        # Scrub personal data before the row is persisted (#1452).
+        post_data = scrub_record(post_data)
 
         def _save():
             with self.get_session() as session:
@@ -1198,6 +1207,8 @@ class PostgresService:
         try:
             with self.get_session() as session:
                 for i, post_data in enumerate(posts_data):
+                    # Scrub personal data before the row is persisted (#1452).
+                    post_data = scrub_record(post_data)
                     sentiment_result = (
                         sentiment_results[i]
                         if sentiment_results and i < len(sentiment_results)
@@ -2354,6 +2365,9 @@ class PostgresService:
         Returns:
             NewsInsight object if successful, None otherwise
         """
+        # Scrub personal data before the row is persisted (#1452).
+        if article_data:
+            article_data = scrub_record(article_data)
         try:
             with self.get_session() as session:
                 insight = NewsInsight(
@@ -2404,6 +2418,9 @@ class PostgresService:
                         if articles_data and i < len(articles_data)
                         else None
                     )
+                    # Scrub personal data before the row is persisted (#1452).
+                    if article_data:
+                        article_data = scrub_record(article_data)
 
                     insight = NewsInsight(
                         article_id=article_data.get("id") if article_data else None,
@@ -3283,25 +3300,46 @@ class PostgresService:
         end_date: Optional[str] = None,
         period: str = "daily",
         limit: int = 100,
-    ) -> List[DailyOnchainKPISnapshot]:
+        offset: int = 0,
+    ) -> Tuple[List[DailyOnchainKPISnapshot], int]:
         """
-        Retrieve historical daily on-chain KPI snapshots.
+        Retrieve historical daily on-chain KPI snapshots with stable ordering
+        and pagination (#1458).
+
+        Ordering is ``snapshot_date DESC, id DESC`` so pages remain stable as
+        history accumulates. Returns ``(page_items, total_matching)``.
         """
+        from src.utils.pagination import clamp_limit, clamp_offset
+
+        limit = clamp_limit(limit)
+        offset = clamp_offset(offset)
         try:
             with self.get_session() as session:
-                stmt = select(DailyOnchainKPISnapshot).where(
-                    DailyOnchainKPISnapshot.period == period
-                )
+                filters = [DailyOnchainKPISnapshot.period == period]
                 if start_date:
-                    stmt = stmt.where(DailyOnchainKPISnapshot.snapshot_date >= start_date)
+                    filters.append(DailyOnchainKPISnapshot.snapshot_date >= start_date)
                 if end_date:
-                    stmt = stmt.where(DailyOnchainKPISnapshot.snapshot_date <= end_date)
+                    filters.append(DailyOnchainKPISnapshot.snapshot_date <= end_date)
 
-                stmt = stmt.order_by(desc(DailyOnchainKPISnapshot.snapshot_date)).limit(limit)
-                return session.execute(stmt).scalars().all()
+                total = session.execute(
+                    select(func.count()).select_from(DailyOnchainKPISnapshot).where(and_(*filters))
+                ).scalar_one()
+
+                stmt = (
+                    select(DailyOnchainKPISnapshot)
+                    .where(and_(*filters))
+                    .order_by(
+                        desc(DailyOnchainKPISnapshot.snapshot_date),
+                        desc(DailyOnchainKPISnapshot.id),
+                    )
+                    .limit(limit)
+                    .offset(offset)
+                )
+                items = list(session.execute(stmt).scalars().all())
+                return items, int(total or 0)
         except SQLAlchemyError as e:
             logger.error(f"Failed to retrieve daily on-chain KPI snapshots: {e}")
-            return []
+            return [], 0
 
     def get_latest_daily_onchain_kpi_snapshot(
         self,
