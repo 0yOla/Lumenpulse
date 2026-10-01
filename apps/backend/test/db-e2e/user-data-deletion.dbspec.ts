@@ -5,7 +5,7 @@ import { UserDataDeletionService } from '../../src/data-retention/user-data-dele
 import {
   USER_DATA_DELETION_ACTION,
   anonymisedSubjectId,
-} from '../src/data-retention/user-data-inventory';
+} from '../../src/data-retention/user-data-inventory';
 
 interface CountRow {
   n: number;
