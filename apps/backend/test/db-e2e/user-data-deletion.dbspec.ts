@@ -43,8 +43,15 @@ const ACCOUNT_COLUMNS = [
   'twoFactorSecret',
 ];
 
-const ACCOUNT_PUBLIC_KEY = `G${'A'.repeat(55)}`;
-const WALLET_PUBLIC_KEY = `G${'B'.repeat(55)}`;
+/**
+ * A deterministic, per-user Strkey-shaped public key.
+ *
+ * `users."stellarPublicKey"` and `stellar_accounts."publicKey"` are unique, and
+ * this suite seeds more than one account (one per case), so a shared constant
+ * makes the second `seedUserData` fail with a duplicate key error.
+ */
+const publicKeyFor = (fill: 'A' | 'B', userId: string): string =>
+  `G${fill}${userId.replace(/[^0-9a-f]/gi, '')}`.toUpperCase().padEnd(56, fill).slice(0, 56);
 
 describe('User data deletion (db e2e)', () => {
   let app: INestApplication;
@@ -76,14 +83,17 @@ describe('User data deletion (db e2e)', () => {
     );
 
   const seedUserData = async (userId: string, email: string): Promise<void> => {
+    const accountPublicKey = publicKeyFor('A', userId);
+    const walletPublicKey = publicKeyFor('B', userId);
+
     await ds.query(
       `UPDATE users SET "firstName" = 'Ada', "lastName" = 'Lovelace', "displayName" = 'Ada Lovelace', bio = 'pioneer of computing', "avatarUrl" = 'https://example.test/avatar.png', "stellarPublicKey" = $2, "twoFactorSecret" = 'TOP-SECRET' WHERE id = $1`,
-      [userId, ACCOUNT_PUBLIC_KEY],
+      [userId, accountPublicKey],
     );
 
     await ds.query(
       'INSERT INTO stellar_accounts ("userId", "publicKey") VALUES ($1, $2)',
-      [userId, WALLET_PUBLIC_KEY],
+      [userId, walletPublicKey],
     );
     await ds.query(
       `INSERT INTO refresh_tokens ("tokenHash", "userId", "expiresAt") VALUES ('seeded-refresh-hash', $1, now() + interval '1 day')`,
@@ -149,7 +159,7 @@ describe('User data deletion (db e2e)', () => {
       [userId, email],
     );
     await ds.query(
-      `INSERT INTO admin_blockchain_audit_logs ("actorId", "actorEmail", "endpoint", "paramsSummary") VALUES ($1, $2, 'POST /grants/rounds', jsonb_build_object('beneficiary', $2::text))`,
+      `INSERT INTO admin_blockchain_audit_logs ("actorId", "actorEmail", "endpoint", "paramsSummary") VALUES ($1, $2::text, 'POST /grants/rounds', jsonb_build_object('beneficiary', $2::text))`,
       [userId, email],
     );
     await ds.query(
